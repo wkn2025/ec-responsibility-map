@@ -1,0 +1,7 @@
+# local tooling, not part of the deployed site
+.claude/
+
+# editor / OS noise
+.DS_Store
+Thumbs.db
+*.swp

@@ -1,0 +1,2328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<title>EC Responsibility Map</title>
+
+<style>
+/* ============================================================
+   FONTS — vendored locally. No runtime network request.
+   ============================================================ */
+@font-face{
+  font-family:'Archivo';
+  src:url('./fonts/archivo-vf.woff2') format('woff2-variations'),
+      url('./fonts/archivo-500.woff2') format('woff2');
+  font-weight:100 900; font-stretch:62% 125%; font-display:swap;
+}
+@font-face{
+  font-family:'Public Sans';
+  src:url('./fonts/public-sans-400.woff2') format('woff2');
+  font-weight:400; font-display:swap;
+}
+@font-face{
+  font-family:'Public Sans';
+  src:url('./fonts/public-sans-600.woff2') format('woff2');
+  font-weight:600; font-display:swap;
+}
+@font-face{
+  font-family:'IBM Plex Mono';
+  src:url('./fonts/ibm-plex-mono-400.woff2') format('woff2');
+  font-weight:400; font-display:swap;
+}
+
+/* ============================================================
+   TOKENS
+   ============================================================ */
+:root{
+  --ec-navy:#26408F;
+  --ec-blue:#0084CC;
+  --ec-lime:#C7CD3D;
+  --void:#070B1C;
+  --void-lift:#0F1631;
+  --mist:#8E9AC4;
+  --paper:#EEF1F8;
+  --hairline:rgba(142,154,196,0.16);
+  --grey-node:#4A5578;
+
+  --display:'Archivo','Arial Narrow',system-ui,sans-serif;
+  --body:'Public Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --data:'IBM Plex Mono',ui-monospace,'Cascadia Mono',Consolas,monospace;
+
+  --r:6px;
+  --panel-w:min(460px,100vw);
+  --ease:cubic-bezier(.22,.61,.36,1);
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; background:var(--void); color:var(--paper);
+  font-family:var(--body); font-size:15px; line-height:1.5;
+  -webkit-font-smoothing:antialiased; overflow:hidden;
+}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+input,select,textarea{font:inherit;color:inherit}
+a{color:var(--ec-blue)}
+
+:focus-visible{outline:2px solid var(--ec-blue);outline-offset:2px;border-radius:3px}
+
+.mono{font-family:var(--data);font-variant-numeric:tabular-nums}
+.display{font-family:var(--display);font-variation-settings:'wdth' 112;font-weight:500;
+  text-transform:uppercase;letter-spacing:.18em}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.hidden{display:none !important}
+
+/* ============================================================
+   SHELL
+   ============================================================ */
+#app{display:flex;flex-direction:column;height:100dvh}
+
+header.top{
+  display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+  padding:14px 20px;border-bottom:1px solid var(--hairline);
+  background:linear-gradient(180deg,rgba(38,64,143,.14),transparent);
+  flex:0 0 auto;
+}
+.brand{display:flex;align-items:baseline;gap:12px;min-width:0}
+.brand h1{font-family:var(--display);font-variation-settings:'wdth' 118;font-weight:500;
+  text-transform:uppercase;letter-spacing:.18em;font-size:14px;margin:0;white-space:nowrap}
+.brand .sub{font-family:var(--data);font-size:11px;color:var(--mist);white-space:nowrap}
+
+.spacer{flex:1 1 auto}
+
+.viewtoggle{display:flex;border:1px solid var(--hairline);border-radius:var(--r);overflow:hidden}
+.viewtoggle button{
+  padding:7px 16px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--mist);transition:background .18s,color .18s;
+}
+.viewtoggle button[aria-pressed="true"]{background:var(--ec-navy);color:var(--paper)}
+
+/* status bar */
+.statusbar{
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  padding:8px 20px;border-bottom:1px solid var(--hairline);
+  background:var(--void-lift);font-size:12.5px;flex:0 0 auto;
+}
+.statusbar .dot{width:7px;height:7px;border-radius:50%;background:var(--mist);flex:0 0 auto}
+.statusbar.dirty .dot{background:var(--ec-lime)}
+.statusbar .txt{font-family:var(--data);color:var(--mist)}
+.statusbar.dirty .txt{color:var(--ec-lime)}
+
+.btn{
+  padding:6px 14px;border-radius:var(--r);border:1px solid var(--hairline);
+  font-size:12.5px;transition:background .16s,border-color .16s,color .16s;
+}
+.btn:hover{border-color:var(--mist)}
+.btn-primary{background:var(--ec-blue);border-color:var(--ec-blue);color:#fff;font-weight:600}
+.btn-primary:hover{background:#0a95e0;border-color:#0a95e0}
+.btn-publish{background:var(--ec-lime);border-color:var(--ec-lime);color:#171B05;font-weight:600}
+.btn-publish:hover{background:#d6dc4c;border-color:#d6dc4c}
+.btn-quiet{color:var(--mist)}
+.btn-danger{color:#FF8F8F;border-color:rgba(255,143,143,.3)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+
+main{flex:1 1 auto;position:relative;min-height:0}
+
+footer.foot{
+  flex:0 0 auto;display:flex;gap:18px;flex-wrap:wrap;align-items:center;
+  padding:8px 20px;border-top:1px solid var(--hairline);
+  font-family:var(--data);font-size:11px;color:var(--mist);
+}
+footer.foot .issue{color:var(--ec-lime);cursor:pointer;text-decoration:underline dotted}
+
+/* ============================================================
+   LIST VIEW
+   ============================================================ */
+#view-list{position:absolute;inset:0;display:flex;flex-direction:column;overflow:hidden}
+
+.searchwrap{padding:22px 20px 0;flex:0 0 auto}
+.searchfield{position:relative}
+.searchfield input{
+  width:100%;padding:16px 18px 16px 46px;background:var(--void-lift);
+  border:1px solid var(--hairline);border-radius:var(--r);font-size:17px;
+}
+.searchfield input::placeholder{color:var(--mist)}
+.searchfield input:focus{border-color:var(--ec-blue);outline:none;box-shadow:0 0 0 3px rgba(0,132,204,.16)}
+.searchfield svg{position:absolute;left:16px;top:50%;transform:translateY(-50%);
+  width:18px;height:18px;stroke:var(--mist);fill:none;stroke-width:1.8;pointer-events:none}
+
+.chips{display:flex;gap:8px;flex-wrap:wrap;padding:14px 20px 0;flex:0 0 auto;align-items:center}
+.chip{
+  padding:5px 12px;border:1px solid var(--hairline);border-radius:100px;
+  font-size:12px;color:var(--mist);transition:all .16s;white-space:nowrap;
+}
+.chip:hover{border-color:var(--mist);color:var(--paper)}
+.chip[aria-pressed="true"]{background:var(--ec-navy);border-color:var(--ec-navy);color:var(--paper)}
+.chip.alarm[aria-pressed="true"]{background:var(--ec-lime);border-color:var(--ec-lime);color:#171B05;font-weight:600}
+.chipgroup-label{font-family:var(--data);font-size:10.5px;color:var(--mist);
+  text-transform:uppercase;letter-spacing:.1em;margin-right:2px}
+
+.results{flex:1 1 auto;overflow-y:auto;padding:18px 20px 40px;scrollbar-width:thin;
+  scrollbar-color:var(--hairline) transparent}
+.resultcount{font-family:var(--data);font-size:11px;color:var(--mist);
+  text-transform:uppercase;letter-spacing:.1em;padding-bottom:12px}
+
+.deptblock{margin-bottom:26px}
+.deptblock > h2{
+  font-family:var(--display);font-variation-settings:'wdth' 118;font-weight:500;
+  text-transform:uppercase;letter-spacing:.18em;font-size:12.5px;color:var(--ec-blue);
+  margin:0 0 2px;padding-bottom:8px;border-bottom:1px solid var(--hairline);
+  display:flex;justify-content:space-between;align-items:baseline;gap:10px;
+}
+.deptblock > h2 .n{font-family:var(--data);font-size:11px;color:var(--mist);letter-spacing:0;text-transform:none}
+.subblock{margin-top:14px}
+.subblock > h3{font-size:12px;font-weight:600;color:var(--mist);margin:0 0 6px;
+  text-transform:uppercase;letter-spacing:.06em}
+
+.row{
+  display:flex;align-items:center;gap:12px;padding:9px 10px;border-radius:var(--r);
+  border:1px solid transparent;transition:background .14s,border-color .14s;
+}
+.row:hover{background:rgba(38,64,143,.14);border-color:var(--hairline)}
+.row .name{
+  text-align:left;flex:1 1 auto;min-width:0;font-size:14.5px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.row .name:hover{color:var(--ec-blue)}
+.row .owner{
+  font-family:var(--data);font-size:12px;color:var(--mist);white-space:nowrap;
+  flex:0 0 auto;text-decoration:underline dotted rgba(142,154,196,.4);text-underline-offset:3px;
+}
+.row .owner:hover{color:var(--ec-blue)}
+.row .owner.none{color:var(--grey-node);text-decoration:none;cursor:default}
+.row .auto{font-family:var(--data);font-size:10px;color:var(--mist);border:1px solid var(--hairline);
+  padding:1px 6px;border-radius:3px;flex:0 0 auto}
+.sopbtn{
+  flex:0 0 auto;font-family:var(--data);font-size:11px;padding:4px 10px;border-radius:3px;
+  border:1px solid rgba(0,132,204,.45);color:var(--ec-blue);text-decoration:none;
+  transition:background .16s;white-space:nowrap;
+}
+.sopbtn:hover{background:rgba(0,132,204,.16)}
+.nosop{
+  flex:0 0 auto;font-family:var(--data);font-size:11px;padding:4px 10px;border-radius:3px;
+  background:var(--ec-lime);color:#171B05;font-weight:600;white-space:nowrap;
+}
+.row .editbtn{flex:0 0 auto;font-size:11px;color:var(--mist);padding:4px 8px;border-radius:3px;
+  border:1px solid var(--hairline)}
+.row .editbtn:hover{color:var(--paper)}
+.row.deleted{opacity:.4}
+.row.deleted .name{text-decoration:line-through}
+.row.drafted{border-left:2px solid var(--ec-lime)}
+
+.empty{padding:60px 10px;text-align:center;color:var(--mist);font-size:15px;max-width:520px;margin:0 auto}
+.errorstate{padding:60px 24px;max-width:640px;margin:0 auto;text-align:left}
+.errorstate h2{font-family:var(--display);font-variation-settings:'wdth' 115;font-weight:500;
+  text-transform:uppercase;letter-spacing:.18em;font-size:14px;color:var(--ec-lime);margin:0 0 14px}
+.errorstate code{font-family:var(--data);font-size:12.5px;background:var(--void-lift);
+  padding:2px 6px;border-radius:3px;color:var(--ec-lime)}
+.errorstate p{color:var(--mist);line-height:1.65}
+
+/* ============================================================
+   MAP VIEW
+   ============================================================ */
+#view-map{position:absolute;inset:0;overflow:hidden;background:
+  radial-gradient(ellipse 70% 60% at 50% 48%,rgba(38,64,143,.20),transparent 70%),var(--void)}
+/* canvas is a replaced element: inset:0 alone leaves it at its 300x150 intrinsic
+   size, so the width/height are stated explicitly. */
+#map-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;
+  touch-action:none;cursor:grab}
+#map-canvas.grabbing{cursor:grabbing}
+#map-labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.lbl{
+  position:absolute;transform:translate(-50%,-50%);white-space:nowrap;
+  pointer-events:none;will-change:transform,opacity;
+}
+.lbl-dept{font-family:var(--display);font-variation-settings:'wdth' 118;font-weight:500;
+  text-transform:uppercase;letter-spacing:.18em;font-size:11px;color:var(--paper);
+  text-shadow:0 0 12px var(--void),0 0 4px var(--void)}
+.lbl-sub{font-size:11.5px;font-weight:600;color:var(--mist);text-shadow:0 0 10px var(--void)}
+.lbl-task{font-size:10.5px;color:var(--mist);text-shadow:0 0 8px var(--void)}
+.lbl-root{font-family:var(--display);font-variation-settings:'wdth' 122;font-weight:500;
+  text-transform:uppercase;letter-spacing:.24em;font-size:10px;color:var(--ec-blue)}
+
+.maphud{position:absolute;left:20px;bottom:20px;display:flex;flex-direction:column;gap:6px;
+  font-family:var(--data);font-size:11px;color:var(--mist);pointer-events:none}
+.maphud .k{display:flex;align-items:center;gap:8px}
+.maphud .sw{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
+.mapsearch{position:absolute;left:20px;top:20px;width:min(320px,calc(100% - 40px))}
+.mapsearch input{width:100%;padding:10px 14px;background:rgba(15,22,49,.86);
+  border:1px solid var(--hairline);border-radius:var(--r);font-size:14px;backdrop-filter:blur(8px)}
+.mapsearch input:focus{border-color:var(--ec-blue);outline:none}
+.maphint{position:absolute;right:20px;bottom:20px;font-family:var(--data);font-size:10.5px;
+  color:var(--mist);opacity:.6;pointer-events:none;text-align:right}
+
+/* ============================================================
+   PANEL (detail + person)
+   ============================================================ */
+.panel{
+  position:absolute;top:0;right:0;bottom:0;width:var(--panel-w);
+  background:var(--void-lift);border-left:1px solid var(--hairline);
+  box-shadow:-24px 0 60px rgba(0,0,0,.5);
+  transform:translateX(101%);transition:transform .34s var(--ease);
+  display:flex;flex-direction:column;z-index:40;
+}
+.panel.open{transform:translateX(0)}
+.panel header{display:flex;align-items:flex-start;gap:12px;padding:20px 20px 14px;
+  border-bottom:1px solid var(--hairline);flex:0 0 auto}
+.panel header .crumb{font-family:var(--data);font-size:10.5px;color:var(--mist);
+  text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
+.panel header h2{font-size:19px;font-weight:600;margin:0;line-height:1.28}
+.panel .close{flex:0 0 auto;width:30px;height:30px;border-radius:var(--r);color:var(--mist);
+  font-size:18px;line-height:1;border:1px solid var(--hairline)}
+.panel .close:hover{color:var(--paper)}
+.panel .body{flex:1 1 auto;overflow-y:auto;padding:18px 20px 40px;scrollbar-width:thin}
+
+.field{margin-bottom:20px}
+.field .lab{font-family:var(--data);font-size:10.5px;color:var(--mist);
+  text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px}
+.field .val{font-size:14.5px;line-height:1.6}
+.chipsline{display:flex;gap:6px;flex-wrap:wrap}
+.syschip{font-family:var(--data);font-size:11px;padding:3px 9px;border-radius:3px;
+  border:1px solid var(--hairline);color:var(--mist)}
+.bigaction{display:block;width:100%;text-align:center;padding:13px;border-radius:var(--r);
+  background:var(--ec-blue);color:#fff;font-weight:600;text-decoration:none;margin-bottom:20px}
+.bigaction:hover{background:#0a95e0}
+.nosop-block{padding:13px;border-radius:var(--r);background:var(--ec-lime);color:#171B05;
+  font-weight:600;text-align:center;margin-bottom:20px;font-size:14px}
+.ownerlink{color:var(--ec-blue);text-decoration:underline;text-underline-offset:3px;
+  background:none;padding:0;font-size:14.5px}
+
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--hairline);
+  border:1px solid var(--hairline);border-radius:var(--r);overflow:hidden;margin-bottom:22px}
+.stat{background:var(--void-lift);padding:14px}
+.stat .n{font-family:var(--data);font-size:26px;line-height:1;color:var(--paper)}
+.stat .n.alarm{color:var(--ec-lime)}
+.stat .l{font-family:var(--data);font-size:10px;color:var(--mist);text-transform:uppercase;
+  letter-spacing:.1em;margin-top:7px;line-height:1.4}
+
+.mixbar{display:flex;height:9px;border-radius:100px;overflow:hidden;background:rgba(0,0,0,.35);margin-bottom:9px}
+.mixbar i{display:block;height:100%}
+.mixlegend{display:flex;gap:14px;flex-wrap:wrap;font-family:var(--data);font-size:10.5px;color:var(--mist)}
+.mixlegend span{display:flex;align-items:center;gap:5px}
+.mixlegend .sw{width:8px;height:8px;border-radius:2px}
+
+.tasklist .row{padding:8px 6px}
+
+/* ============================================================
+   MODALS
+   ============================================================ */
+.scrim{position:fixed;inset:0;background:rgba(4,7,18,.72);z-index:60;
+  display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)}
+.modal{background:var(--void-lift);border:1px solid var(--hairline);border-radius:10px;
+  width:min(660px,100%);max-height:88vh;display:flex;flex-direction:column;
+  box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.modal header{padding:18px 22px 14px;border-bottom:1px solid var(--hairline);flex:0 0 auto}
+.modal header h2{margin:0;font-family:var(--display);font-variation-settings:'wdth' 115;
+  font-weight:500;text-transform:uppercase;letter-spacing:.18em;font-size:13px}
+.modal .body{padding:20px 22px;overflow-y:auto;flex:1 1 auto}
+.modal footer{padding:14px 22px;border-top:1px solid var(--hairline);display:flex;
+  gap:10px;justify-content:flex-end;flex-wrap:wrap;flex:0 0 auto}
+.modal p{color:var(--mist);line-height:1.6}
+
+.form label{display:block;margin-bottom:16px}
+.form .lt{font-family:var(--data);font-size:10.5px;color:var(--mist);
+  text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;display:block}
+.form input[type=text],.form input[type=url],.form textarea,.form select{
+  width:100%;padding:10px 12px;background:var(--void);border:1px solid var(--hairline);
+  border-radius:var(--r);font-size:14px;
+}
+.form textarea{min-height:80px;resize:vertical;font-family:var(--body)}
+.form input:focus,.form textarea:focus,.form select:focus{border-color:var(--ec-blue);outline:none}
+.form .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form .withadd{display:flex;gap:8px}
+.form .withadd select{flex:1 1 auto}
+.form .hint{font-size:12px;color:var(--mist);margin-top:5px}
+.syspick{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.syspick .chip[aria-pressed="true"]{background:var(--ec-blue);border-color:var(--ec-blue);color:#fff}
+
+.sysnote{padding:10px 12px;border-left:2px solid var(--ec-blue);background:rgba(0,132,204,.08);
+  font-size:12.5px;color:var(--mist);margin-bottom:18px;line-height:1.55}
+
+.difflist{font-size:13px}
+.diffrow{padding:10px 0;border-bottom:1px solid var(--hairline)}
+.diffrow .dt{font-weight:600;margin-bottom:4px}
+.diffrow .df{font-family:var(--data);font-size:10.5px;color:var(--mist);
+  text-transform:uppercase;letter-spacing:.08em}
+.diffrow .old{color:#FF8F8F;text-decoration:line-through;word-break:break-word}
+.diffrow .new{color:var(--ec-lime);word-break:break-word}
+.diffrow .tag{font-family:var(--data);font-size:10px;padding:1px 6px;border-radius:3px;
+  border:1px solid var(--hairline);color:var(--mist);margin-left:6px}
+
+/* toast */
+#toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,20px);z-index:80;
+  background:var(--void-lift);border:1px solid var(--hairline);border-radius:var(--r);
+  padding:10px 18px;font-family:var(--data);font-size:12px;color:var(--mist);
+  opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;
+  box-shadow:0 10px 40px rgba(0,0,0,.5);max-width:calc(100vw - 40px);text-align:center}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width:720px){
+  header.top{padding:12px 14px;gap:10px}
+  .brand .sub{display:none}
+  .searchwrap,.chips,.results,.statusbar,footer.foot{padding-left:14px;padding-right:14px}
+  .row{flex-wrap:wrap;gap:8px}
+  .row .name{flex:1 1 100%}
+  .stats{grid-template-columns:1fr 1fr}
+  .maphint{display:none}
+  .panel{--panel-w:100vw}
+}
+
+@media (prefers-reduced-motion:reduce){
+  *{transition-duration:.01ms !important;animation-duration:.01ms !important}
+}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <header class="top">
+    <div class="brand">
+      <h1>EC Responsibility Map</h1>
+      <span class="sub" id="brand-sub"></span>
+    </div>
+    <div class="spacer"></div>
+    <div class="viewtoggle" role="group" aria-label="View">
+      <button id="btn-view-list" aria-pressed="true">List</button>
+      <button id="btn-view-map" aria-pressed="false" class="hidden">Map</button>
+    </div>
+  </header>
+
+  <div class="statusbar" id="statusbar">
+    <span class="dot"></span>
+    <span class="txt" id="status-text">Loading…</span>
+    <span class="spacer"></span>
+    <span id="status-actions"></span>
+  </div>
+
+  <main>
+    <!-- ---------------- LIST VIEW ---------------- -->
+    <section id="view-list">
+      <div class="searchwrap">
+        <div class="searchfield">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></svg>
+          <input id="q" type="search" autocomplete="off" spellcheck="false"
+                 placeholder="Search a task or a person" aria-label="Search a task or a person">
+        </div>
+      </div>
+      <div class="chips" id="chips"></div>
+      <div class="results" id="results"></div>
+    </section>
+
+    <!-- ---------------- MAP VIEW ---------------- -->
+    <section id="view-map" class="hidden" aria-hidden="true">
+      <canvas id="map-canvas"></canvas>
+      <div id="map-labels"></div>
+      <div class="mapsearch">
+        <input id="map-q" type="search" autocomplete="off" spellcheck="false"
+               placeholder="Find a task or a person" aria-label="Find on the map">
+      </div>
+      <div class="maphud">
+        <div class="k"><i class="sw" style="background:#0084CC"></i> Owner + SOP documented</div>
+        <div class="k"><i class="sw" style="background:#C7CD3D"></i> Owner, no SOP</div>
+        <div class="k"><i class="sw" style="background:#4A5578"></i> No owner</div>
+      </div>
+      <div class="maphint">Click a hub to expand · drag to pan · scroll to zoom</div>
+    </section>
+
+    <!-- ---------------- PANELS ---------------- -->
+    <aside class="panel" id="panel-detail" role="dialog" aria-modal="false" aria-label="Task detail">
+      <header>
+        <div style="flex:1 1 auto;min-width:0">
+          <div class="crumb" id="d-crumb"></div>
+          <h2 id="d-title"></h2>
+        </div>
+        <button class="close" data-close-panel aria-label="Close">&times;</button>
+      </header>
+      <div class="body" id="d-body"></div>
+    </aside>
+
+    <aside class="panel" id="panel-person" role="dialog" aria-modal="false" aria-label="Person">
+      <header>
+        <div style="flex:1 1 auto;min-width:0">
+          <div class="crumb" id="p-crumb"></div>
+          <h2 id="p-title"></h2>
+        </div>
+        <button class="close" data-close-panel aria-label="Close">&times;</button>
+      </header>
+      <div class="body" id="p-body"></div>
+    </aside>
+  </main>
+
+  <footer class="foot">
+    <span id="f-counts"></span>
+    <span id="f-issues"></span>
+    <span class="spacer"></span>
+    <span id="f-mode"></span>
+  </footer>
+</div>
+
+<div id="modal-root"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+"use strict";
+/* ==========================================================================
+   EC RESPONSIBILITY MAP
+   Static single-file app. No build step. No runtime CDN.
+   Code and data never share a file: there is NO seed data in here, by design.
+   ========================================================================== */
+
+const CODE_SCHEMA_VERSION = 1;
+const DRAFT_KEY   = 'ec-respmap-draft';
+const HISTORY_KEY = 'ec-respmap-history';
+const REPO_KEY    = 'ec-respmap-repo';
+const TOKEN_KEY   = 'ec-respmap-token';   // sessionStorage only
+
+const AUTOMATIONS = ['Manual','Semi','Auto'];
+const EDITABLE_FIELDS = ['department','subFunction','task','ownerId','sopLink','description','systems','automation'];
+const FIELD_LABEL = {
+  department:'Department', subFunction:'Sub-function', task:'Task', ownerId:'Owner',
+  sopLink:'SOP link', description:'Description', systems:'Systems', automation:'Automation',
+  deleted:'Deleted'
+};
+
+const REDUCED_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- storage that never throws ---------- */
+let storageOK = true;
+const store = {
+  get(k){ try{ return localStorage.getItem(k); }catch(e){ storageOK=false; return null; } },
+  set(k,v){ try{ localStorage.setItem(k,v); return true; }catch(e){ storageOK=false; return false; } },
+  del(k){ try{ localStorage.removeItem(k); }catch(e){ storageOK=false; } }
+};
+const sess = {
+  get(k){ try{ return sessionStorage.getItem(k); }catch(e){ return null; } },
+  set(k,v){ try{ sessionStorage.setItem(k,v); }catch(e){} },
+  del(k){ try{ sessionStorage.removeItem(k); }catch(e){} }
+};
+
+/* ---------- app state ---------- */
+const App = {
+  published:null,      // parsed data.json, untouched
+  draft:null,          // { basedOnVersion, pendingPublishVersion, tasks:{}, people:{} }
+  tasks:[],            // effective task list (draft applied)
+  people:new Map(),    // effective people map id -> person
+  idx:{},
+  issues:[],           // skipped rows
+  editMode:false,
+  readOnly:false,      // storage unavailable
+  view:'list',
+  filters:{ q:'', dept:null, automation:null, missingOnly:false },
+  loadError:null
+};
+
+/* ==========================================================================
+   1. LOAD + MIGRATE + INDEX
+   ========================================================================== */
+
+/* NFD strips combining marks, which covers á é ã å ü and friends. It does NOT
+   decompose ø æ œ ß đ ł þ ð — and Nordic names are exactly what this data is full of,
+   so those get an explicit fold. Without it "Koster" never finds "Køster". */
+const FOLD = { 'ø':'o','æ':'ae','œ':'oe','ß':'ss','đ':'d','ð':'d','ł':'l','þ':'th','ı':'i','ħ':'h','ŋ':'n','ŧ':'t' };
+function normalise(s){
+  return String(s==null?'':s)
+    .normalize('NFD').replace(/[̀-ͯ]/g,'')
+    .toLowerCase()
+    .replace(/[øæœßđðłþıħŋŧ]/g, c=>FOLD[c] || c);
+}
+function trim(v){ return typeof v==='string' ? v.trim() : v; }
+function esc(s){
+  return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function safeUrl(u){
+  const s = String(u||'').trim();
+  return /^(https?:|mailto:|file:|\\\\)/i.test(s) ? s : '';
+}
+
+/* Migrations run in memory only. The file on disk is never rewritten until
+   the editor publishes. New code must always be able to read old data. */
+function migrate(data){
+  let v = Number(data.schemaVersion || 0);
+  if (v < 1){
+    // v0 -> v1: tasks carried a plain `Owner` display name; move to a people lookup.
+    const people = new Map();
+    (data.tasks||[]).forEach(t=>{
+      const nm = trim(t.Owner || t.owner || '');
+      if (!nm) return;
+      const id = 'p_' + normalise(nm).replace(/[^a-z0-9]+/g,'_');
+      if (!people.has(id)) people.set(id,{id,displayName:nm,initials:nm.split(/\s+/).map(w=>w[0]).join('').toUpperCase(),role:''});
+      t.ownerId = id;
+    });
+    data.people = (data.people||[]).concat([...people.values()]);
+    v = 1;
+  }
+  data.schemaVersion = v;
+  return data;
+}
+
+function parsePayload(raw){
+  const data = migrate(raw);
+
+  if (data.schemaVersion > CODE_SCHEMA_VERSION){
+    throw new Error('data.json is schemaVersion ' + data.schemaVersion +
+      ' but this app understands ' + CODE_SCHEMA_VERSION + '. Deploy the newer index.html.');
+  }
+  if (!Array.isArray(data.tasks)) throw new Error('data.json has no "tasks" array.');
+
+  const issues = [];
+  const people = new Map();
+  (data.people||[]).forEach(p=>{
+    if (!p || !p.id) return;
+    people.set(p.id, {
+      id:p.id,
+      displayName: trim(p.displayName) || p.id,
+      initials: trim(p.initials) || '',
+      role: trim(p.role) || ''
+    });
+  });
+
+  const tasks = [];
+  const seenIds = new Set();
+  data.tasks.forEach((t,i)=>{
+    if (!t || typeof t !== 'object'){ issues.push('Row '+(i+1)+': not an object'); return; }
+    const dep = trim(t.department||t.Department||'');
+    const nm  = trim(t.task||t.Task||'');
+    if (!dep || !nm){
+      issues.push('Row '+(i+1)+' skipped: missing '+(!dep?'Department':'Task'));
+      return;
+    }
+    let id = trim(t.id) || '';
+    if (!id || seenIds.has(id)){
+      const fresh = newTaskId(seenIds);
+      issues.push('Row '+(i+1)+' ('+nm+'): '+(id?'duplicate':'missing')+' id, assigned '+fresh+' for this session only');
+      id = fresh;
+    }
+    seenIds.add(id);
+
+    let systems = t.systems ?? t.Systems ?? [];
+    if (typeof systems === 'string') systems = systems.split(';');   // tolerate the old delimited form
+    systems = (Array.isArray(systems)?systems:[]).map(trim).filter(Boolean);
+
+    let owner = t.ownerId ?? t.OwnerId ?? null;
+    owner = owner ? trim(owner) : null;
+    if (owner && !people.has(owner)){
+      issues.push('Row '+(i+1)+' ('+nm+'): ownerId "'+owner+'" is not in the people list');
+      people.set(owner,{id:owner,displayName:owner,initials:'',role:''});
+    }
+
+    let auto = trim(t.automation||t.Automation||'');
+    if (auto && !AUTOMATIONS.includes(auto)){
+      issues.push('Row '+(i+1)+' ('+nm+'): automation "'+auto+'" is not Manual/Semi/Auto');
+      auto = '';
+    }
+
+    tasks.push({
+      id,
+      department: dep,
+      subFunction: trim(t.subFunction||t.SubFunction||'') || '—',
+      task: nm,
+      ownerId: owner,
+      sopLink: trim(t.sopLink||t.SOPLink||'') || '',
+      description: trim(t.description||t.Description||'') || '',
+      systems,
+      automation: auto,
+      source: (trim(t.source||t.Source||'')||'').toLowerCase()==='system' ? 'System' : 'Manual',
+      workTypeId: trim(t.workTypeId||t.WorkTypeID||'') || '',
+      deleted: t.deleted === true
+    });
+  });
+
+  return {
+    schemaVersion: data.schemaVersion,
+    version: Number(data.version||0),
+    updatedAt: data.updatedAt || '',
+    updatedBy: data.updatedBy || '',
+    people, tasks, issues
+  };
+}
+
+function newTaskId(taken){
+  let n = 1;
+  const pad = x => 't_' + String(x).padStart(3,'0');
+  while (taken && taken.has(pad(n))) n++;
+  // collision-proof against ids generated later in a draft
+  return pad(n) + '_' + Math.random().toString(36).slice(2,6);
+}
+
+async function loadData(){
+  let res;
+  try{
+    // Cache-buster is mandatory: GitHub Pages sits behind a ~10 min CDN cache.
+    res = await fetch('./data.json?t=' + Date.now(), { cache:'no-store' });
+  }catch(e){
+    throw new Error('Could not reach data.json (' + e.message + ').');
+  }
+  if (!res.ok) throw new Error('data.json returned HTTP ' + res.status + ' ' + res.statusText + '.');
+  const text = await res.text();
+  let raw;
+  try{ raw = JSON.parse(text); }
+  catch(e){ throw new Error('data.json is not valid JSON: ' + e.message); }
+  return parsePayload(raw);
+}
+
+/* ---------- draft layer ---------- */
+function loadDraft(){
+  const s = store.get(DRAFT_KEY);
+  if (!s) return emptyDraft();
+  try{
+    const d = JSON.parse(s);
+    return { basedOnVersion:Number(d.basedOnVersion||0),
+             pendingPublishVersion:Number(d.pendingPublishVersion||0),
+             tasks:d.tasks||{}, people:d.people||{} };
+  }catch(e){ return emptyDraft(); }
+}
+function emptyDraft(){
+  return { basedOnVersion:0, pendingPublishVersion:0, tasks:{}, people:{} };
+}
+function saveDraft(){
+  if (App.readOnly) return;
+  const ok = store.set(DRAFT_KEY, JSON.stringify(App.draft));
+  if (!ok){ App.readOnly = true; App.editMode = false; renderStatus(); toast('Browser storage unavailable — read only.'); }
+}
+function draftIsEmpty(d){
+  return Object.keys(d.tasks).length===0 && Object.keys(d.people).length===0;
+}
+
+/* ---------- compose effective state ---------- */
+function compose(){
+  const P = App.published, D = App.draft;
+
+  App.people = new Map();
+  P.people.forEach((v,k)=>App.people.set(k,{...v}));
+  for (const [id,patch] of Object.entries(D.people)){
+    const base = App.people.get(id) || {id,displayName:id,initials:'',role:''};
+    App.people.set(id, {...base, ...patch});
+  }
+
+  const byId = new Map();
+  P.tasks.forEach(t=>byId.set(t.id,{...t}));
+  for (const [id,patch] of Object.entries(D.tasks)){
+    const base = byId.get(id);
+    if (base) byId.set(id, {...base, ...patch});
+    else if (patch.__new) byId.set(id, {...patch, id});
+  }
+  App.tasks = [...byId.values()];
+  buildIndexes();
+}
+
+function buildIndexes(){
+  const live = App.tasks.filter(t=>!t.deleted);
+  const byDept = new Map(), byPerson = new Map(), bySystem = new Map();
+  const depts = new Map();   // dept -> Set(subFunction)
+  const systems = new Set();
+
+  live.forEach(t=>{
+    if (!byDept.has(t.department)) byDept.set(t.department,[]);
+    byDept.get(t.department).push(t);
+
+    if (!depts.has(t.department)) depts.set(t.department,new Set());
+    depts.get(t.department).add(t.subFunction);
+
+    const pid = t.ownerId || '__none';
+    if (!byPerson.has(pid)) byPerson.set(pid,[]);
+    byPerson.get(pid).push(t);
+
+    t.systems.forEach(s=>{
+      systems.add(s);
+      if (!bySystem.has(s)) bySystem.set(s,[]);
+      bySystem.get(s).push(t);
+    });
+
+    t._search = normalise([t.task,t.department,t.subFunction,ownerName(t.ownerId),
+                           t.systems.join(' '),t.workTypeId].join(' '));
+  });
+
+  App.idx = {
+    live, byDept, byPerson, bySystem, depts,
+    systems:[...systems].sort((a,b)=>a.localeCompare(b)),
+    deptNames:[...byDept.keys()].sort((a,b)=>a.localeCompare(b)),
+    subFunctions:[...new Set(live.map(t=>t.subFunction))].sort((a,b)=>a.localeCompare(b)),
+    missingSop: live.filter(t=>!t.sopLink).length,
+    noOwner: live.filter(t=>!t.ownerId).length
+  };
+}
+
+function ownerName(id){
+  if (!id) return '';
+  const p = App.people.get(id);
+  return p ? p.displayName : id;
+}
+function nodeColour(t){
+  if (!t.ownerId) return '#4A5578';
+  return t.sopLink ? '#0084CC' : '#C7CD3D';
+}
+
+/* ==========================================================================
+   2. SEARCH LIST
+   ========================================================================== */
+
+const $ = s => document.querySelector(s);
+const el = (tag,cls,html)=>{ const n=document.createElement(tag); if(cls)n.className=cls; if(html!=null)n.innerHTML=html; return n; };
+
+function matchingTasks(){
+  const f = App.filters;
+  const q = normalise(f.q).split(/\s+/).filter(Boolean);
+  return App.tasks.filter(t=>{
+    if (t.deleted && !App.editMode) return false;
+    if (f.dept && t.department !== f.dept) return false;
+    if (f.automation && t.automation !== f.automation) return false;
+    if (f.missingOnly && t.sopLink) return false;
+    if (!q.length) return true;
+    const hay = t._search || normalise(t.task+' '+t.department+' '+t.subFunction+' '+ownerName(t.ownerId));
+    return q.every(w=>hay.includes(w));
+  });
+}
+
+function renderChips(){
+  const c = $('#chips'); c.innerHTML='';
+  const f = App.filters;
+
+  const g1 = el('span','chipgroup-label','Department');
+  c.appendChild(g1);
+  App.idx.deptNames.forEach(d=>{
+    const b = el('button','chip',esc(d));
+    b.setAttribute('aria-pressed', f.dept===d ? 'true':'false');
+    b.onclick = ()=>{ f.dept = f.dept===d?null:d; renderChips(); renderResults(); };
+    c.appendChild(b);
+  });
+
+  const g2 = el('span','chipgroup-label','Automation');
+  g2.style.marginLeft='8px';
+  c.appendChild(g2);
+  AUTOMATIONS.forEach(a=>{
+    const b = el('button','chip',esc(a));
+    b.setAttribute('aria-pressed', f.automation===a ? 'true':'false');
+    b.onclick = ()=>{ f.automation = f.automation===a?null:a; renderChips(); renderResults(); };
+    c.appendChild(b);
+  });
+
+  const m = el('button','chip alarm','Missing SOP only');
+  m.style.marginLeft='8px';
+  m.setAttribute('aria-pressed', f.missingOnly?'true':'false');
+  m.onclick = ()=>{ f.missingOnly=!f.missingOnly; renderChips(); renderResults(); };
+  c.appendChild(m);
+
+  if (f.dept||f.automation||f.missingOnly||f.q){
+    const clr = el('button','chip btn-quiet','Clear');
+    clr.onclick = ()=>{ App.filters={q:'',dept:null,automation:null,missingOnly:false};
+      $('#q').value=''; renderChips(); renderResults(); };
+    c.appendChild(clr);
+  }
+
+  if (App.editMode){
+    const add = el('button','chip','+ New task');
+    add.style.marginLeft='auto';
+    add.style.borderColor='var(--ec-blue)';
+    add.style.color='var(--ec-blue)';
+    add.onclick = ()=>openTaskEditor(null);
+    c.appendChild(add);
+  }
+}
+
+function taskRow(t){
+  const r = el('div','row');
+  if (t.deleted) r.classList.add('deleted');
+  if (App.draft && App.draft.tasks[t.id]) r.classList.add('drafted');
+
+  const name = el('button','name',esc(t.task));
+  name.onclick = ()=>openDetail(t.id);
+  r.appendChild(name);
+
+  if (t.automation) r.appendChild(el('span','auto',esc(t.automation)));
+
+  const own = el('button','owner', t.ownerId ? esc(ownerName(t.ownerId)) : 'Unassigned');
+  if (!t.ownerId){ own.classList.add('none'); own.disabled=true; }
+  else own.onclick = ()=>openPerson(t.ownerId);
+  r.appendChild(own);
+
+  const url = safeUrl(t.sopLink);
+  if (url){
+    const a = el('a','sopbtn','Open SOP');
+    a.href = url; a.target='_blank'; a.rel='noopener noreferrer';
+    r.appendChild(a);
+  } else {
+    r.appendChild(el('span','nosop','No SOP'));
+  }
+
+  if (App.editMode){
+    const e = el('button','editbtn','Edit');
+    e.onclick = ()=>openTaskEditor(t.id);
+    r.appendChild(e);
+  }
+  return r;
+}
+
+function renderResults(){
+  const box = $('#results');
+  box.innerHTML='';
+
+  if (App.loadError){ renderLoadError(box); return; }
+
+  const rows = matchingTasks();
+  const f = App.filters;
+
+  const count = el('div','resultcount',
+    rows.length + (rows.length===1?' task':' tasks') +
+    (f.q ? ' matching “'+esc(f.q)+'”' : ''));
+  box.appendChild(count);
+
+  if (!rows.length){
+    const q = f.q ? esc(f.q) : '';
+    box.appendChild(el('div','empty', q
+      ? 'No task matches “'+q+'”. Try a department name or a colleague\'s name.'
+      : 'No task matches these filters.'));
+    return;
+  }
+
+  // group: department -> subFunction, collapsed to matches only
+  const g = new Map();
+  rows.forEach(t=>{
+    if (!g.has(t.department)) g.set(t.department,new Map());
+    const s = g.get(t.department);
+    if (!s.has(t.subFunction)) s.set(t.subFunction,[]);
+    s.get(t.subFunction).push(t);
+  });
+
+  [...g.keys()].sort((a,b)=>a.localeCompare(b)).forEach(dep=>{
+    const subs = g.get(dep);
+    const n = [...subs.values()].reduce((a,v)=>a+v.length,0);
+    const block = el('div','deptblock');
+    const h = el('h2','', '<span>'+esc(dep)+'</span><span class="n">'+n+'</span>');
+    block.appendChild(h);
+    [...subs.keys()].sort((a,b)=>a.localeCompare(b)).forEach(sf=>{
+      const sb = el('div','subblock');
+      sb.appendChild(el('h3','',esc(sf)));
+      subs.get(sf).sort((a,b)=>a.task.localeCompare(b.task)).forEach(t=>sb.appendChild(taskRow(t)));
+      block.appendChild(sb);
+    });
+    box.appendChild(block);
+  });
+}
+
+function renderLoadError(box){
+  const e = el('div','errorstate');
+  e.innerHTML =
+    '<h2>Data could not be loaded</h2>' +
+    '<p>'+esc(App.loadError)+'</p>' +
+    '<p>This app deliberately has <strong>no built-in sample data</strong>. Showing invented rows here ' +
+    'would be worse than showing nothing, because it would look like real ownership information.</p>' +
+    '<p>Check that <code>data.json</code> exists next to <code>index.html</code> in the repo root, that it is valid JSON, ' +
+    'and that GitHub Pages has finished redeploying. Pages can take up to a minute after a commit.</p>' +
+    '<p><button class="btn btn-primary" onclick="location.reload()">Reload</button></p>';
+  box.appendChild(e);
+}
+
+/* ==========================================================================
+   3. DETAIL PANEL
+   ========================================================================== */
+
+let lastFocus = null;
+
+function openPanelEl(p){
+  lastFocus = document.activeElement;
+  document.querySelectorAll('.panel.open').forEach(x=>{ if(x!==p) x.classList.remove('open'); });
+  p.classList.add('open');
+  const c = p.querySelector('.close'); if (c) c.focus();
+}
+function closePanels(){
+  document.querySelectorAll('.panel.open').forEach(p=>p.classList.remove('open'));
+  if (lastFocus && document.contains(lastFocus)) lastFocus.focus();
+}
+
+function openDetail(id){
+  const t = App.tasks.find(x=>x.id===id);
+  if (!t) return;
+  $('#d-crumb').textContent = t.department + ' › ' + t.subFunction;
+  $('#d-title').textContent = t.task;
+
+  const b = $('#d-body'); b.innerHTML='';
+
+  const url = safeUrl(t.sopLink);
+  if (url){
+    const a = el('a','bigaction','Open SOP');
+    a.href=url; a.target='_blank'; a.rel='noopener noreferrer';
+    b.appendChild(a);
+  } else {
+    b.appendChild(el('div','nosop-block','No SOP documented'));
+  }
+
+  const own = el('div','field');
+  own.appendChild(el('div','lab','Owner'));
+  const ov = el('div','val');
+  if (t.ownerId){
+    const lk = el('button','ownerlink',esc(ownerName(t.ownerId)));
+    lk.onclick = ()=>openPerson(t.ownerId);
+    ov.appendChild(lk);
+    const p = App.people.get(t.ownerId);
+    if (p && p.role) ov.appendChild(el('div','', '<span style="color:var(--mist);font-size:13px">'+esc(p.role)+'</span>'));
+  } else {
+    ov.innerHTML = '<span style="color:var(--ec-lime);font-weight:600">Unassigned</span>';
+  }
+  own.appendChild(ov); b.appendChild(own);
+
+  if (t.description){
+    const d = el('div','field');
+    d.appendChild(el('div','lab','Description'));
+    d.appendChild(el('div','val',esc(t.description)));
+    b.appendChild(d);
+  }
+
+  if (t.systems.length){
+    const s = el('div','field');
+    s.appendChild(el('div','lab','Systems'));
+    const line = el('div','chipsline');
+    t.systems.forEach(x=>line.appendChild(el('span','syschip',esc(x))));
+    s.appendChild(line); b.appendChild(s);
+  }
+
+  const meta = el('div','field');
+  meta.appendChild(el('div','lab','Automation'));
+  meta.appendChild(el('div','val','<span class="syschip">'+esc(t.automation||'Not recorded')+'</span>'));
+  b.appendChild(meta);
+
+  if (t.workTypeId){
+    const w = el('div','field');
+    w.appendChild(el('div','lab','Work type ID'));
+    w.appendChild(el('div','val','<span class="mono">'+esc(t.workTypeId)+'</span>'));
+    b.appendChild(w);
+  }
+
+  if (t.source === 'System'){
+    b.appendChild(el('div','sysnote',
+      'This task comes from the claims system. Edits here will be overwritten when the export is automated.'));
+  }
+
+  if (App.editMode){
+    const bar = el('div','', '');
+    bar.style.cssText='display:flex;gap:10px;margin-top:8px';
+    const e = el('button','btn btn-primary','Edit task');
+    e.onclick = ()=>openTaskEditor(t.id);
+    bar.appendChild(e);
+    const d = el('button','btn btn-danger', t.deleted?'Restore':'Delete');
+    d.onclick = ()=>{
+      patchTask(t.id, {deleted: !t.deleted});
+      openDetail(t.id); refreshAll();
+    };
+    bar.appendChild(d);
+    b.appendChild(bar);
+  }
+
+  const idn = el('div','field');
+  idn.style.marginTop='24px';
+  idn.appendChild(el('div','lab','Task id'));
+  idn.appendChild(el('div','val','<span class="mono" style="font-size:12px;color:var(--mist)">'+esc(t.id)+'</span>'));
+  b.appendChild(idn);
+
+  openPanelEl($('#panel-detail'));
+}
+
+/* ==========================================================================
+   4. PERSON VIEW
+   ========================================================================== */
+
+function openPerson(pid){
+  const p = App.people.get(pid);
+  const tasks = (App.idx.byPerson.get(pid)||[]);
+  if (!p && !tasks.length) return;
+
+  $('#p-crumb').textContent = p && p.role ? p.role : 'Person';
+  $('#p-title').textContent = p ? p.displayName : pid;
+
+  const b = $('#p-body'); b.innerHTML='';
+
+  const depts = [...new Set(tasks.map(t=>t.department))].sort();
+  const systems = [...new Set(tasks.flatMap(t=>t.systems))].sort((a,b)=>a.localeCompare(b));
+  const noSop = tasks.filter(t=>!t.sopLink).length;
+  const mix = { Manual:0, Semi:0, Auto:0, '':0 };
+  tasks.forEach(t=>{ mix[t.automation||''] = (mix[t.automation||'']||0)+1; });
+
+  if (depts.length){
+    const d = el('div','field');
+    d.appendChild(el('div','lab','Departments'));
+    d.appendChild(el('div','val',esc(depts.join(' · '))));
+    b.appendChild(d);
+  }
+
+  const stats = el('div','stats');
+  stats.appendChild(el('div','stat','<div class="n">'+tasks.length+'</div><div class="l">Tasks owned</div>'));
+  stats.appendChild(el('div','stat','<div class="n">'+depts.length+'</div><div class="l">Departments spanned</div>'));
+  stats.appendChild(el('div','stat','<div class="n">'+systems.length+'</div><div class="l">Systems required</div>'));
+  stats.appendChild(el('div','stat','<div class="n'+(noSop?' alarm':'')+'">'+noSop+'</div><div class="l">Tasks without an SOP</div>'));
+  b.appendChild(stats);
+
+  // automation mix
+  const total = tasks.length || 1;
+  const cols = { Manual:'#26408F', Semi:'#0084CC', Auto:'#C7CD3D', '':'#4A5578' };
+  const am = el('div','field');
+  am.appendChild(el('div','lab','Automation mix'));
+  const bar = el('div','mixbar');
+  ['Manual','Semi','Auto',''].forEach(k=>{
+    if (!mix[k]) return;
+    const i = document.createElement('i');
+    i.style.width = (mix[k]/total*100)+'%';
+    i.style.background = cols[k];
+    bar.appendChild(i);
+  });
+  am.appendChild(bar);
+  const leg = el('div','mixlegend');
+  ['Manual','Semi','Auto',''].forEach(k=>{
+    if (!mix[k]) return;
+    leg.appendChild(el('span','','<i class="sw" style="background:'+cols[k]+'"></i>'+
+      esc(k||'Not recorded')+' '+mix[k]));
+  });
+  am.appendChild(leg);
+  b.appendChild(am);
+
+  if (systems.length){
+    const s = el('div','field');
+    s.appendChild(el('div','lab','Systems required — onboarding access list'));
+    const line = el('div','chipsline');
+    systems.forEach(x=>line.appendChild(el('span','syschip',esc(x))));
+    s.appendChild(line); b.appendChild(s);
+  }
+
+  const tl = el('div','field tasklist');
+  tl.appendChild(el('div','lab','All tasks'));
+  tasks.slice().sort((a,b)=>a.department.localeCompare(b.department)||a.task.localeCompare(b.task))
+    .forEach(t=>tl.appendChild(taskRow(t)));
+  b.appendChild(tl);
+
+  openPanelEl($('#panel-person'));
+}
+
+/* ==========================================================================
+   5. EDITING — draft layer, status bar, publish
+   ========================================================================== */
+
+function patchTask(id, patch){
+  if (!App.editMode || App.readOnly) return;
+  const base = App.published.tasks.find(t=>t.id===id);
+  const cur  = App.draft.tasks[id] || {};
+  const next = {...cur, ...patch};
+
+  if (base && !cur.__new){
+    // drop fields that have returned to the published value
+    for (const k of Object.keys(next)){
+      if (k==='__new') continue;
+      if (deepEq(next[k], base[k])) delete next[k];
+    }
+  }
+  if (Object.keys(next).length === 0) delete App.draft.tasks[id];
+  else App.draft.tasks[id] = next;
+
+  App.draft.basedOnVersion = App.published.version;
+  saveDraft(); compose();
+}
+
+function patchPerson(id, patch){
+  if (!App.editMode || App.readOnly) return;
+  const base = App.published.people.get(id);
+  const cur = App.draft.people[id] || {};
+  const next = {...cur, ...patch};
+  if (base){
+    for (const k of Object.keys(next)) if (deepEq(next[k], base[k])) delete next[k];
+  }
+  if (Object.keys(next).length===0) delete App.draft.people[id];
+  else App.draft.people[id] = next;
+  App.draft.basedOnVersion = App.published.version;
+  saveDraft(); compose();
+}
+
+function deepEq(a,b){
+  if (Array.isArray(a)&&Array.isArray(b))
+    return a.length===b.length && a.every((v,i)=>v===b[i]);
+  if (a==null && b==null) return true;
+  if (a==='' && b==null) return true;
+  if (a==null && b==='') return true;
+  return a===b;
+}
+
+/* ---------- diff ---------- */
+function computeDiff(){
+  const out = [];
+  for (const [id,patch] of Object.entries(App.draft.tasks)){
+    const base = App.published.tasks.find(t=>t.id===id);
+    const eff  = App.tasks.find(t=>t.id===id);
+    if (!base){
+      out.push({ id, kind:'new', task: eff?eff.task:'(new task)', field:null });
+      continue;
+    }
+    for (const k of Object.keys(patch)){
+      if (k==='__new') continue;
+      if (k==='deleted'){
+        out.push({ id, kind: patch.deleted?'delete':'restore', task: base.task, field:null });
+        continue;
+      }
+      out.push({ id, kind:'edit', task: base.task, field:k,
+                 old: display(k, base[k]), neu: display(k, patch[k]) });
+    }
+  }
+  for (const [id,patch] of Object.entries(App.draft.people)){
+    const base = App.published.people.get(id);
+    for (const k of Object.keys(patch)){
+      out.push({ id, kind:'person', task:'Person: '+((base&&base.displayName)||id), field:k,
+                 old: display(k, base?base[k]:''), neu: display(k, patch[k]) });
+    }
+  }
+  return out;
+}
+function display(field, v){
+  if (field==='ownerId') return v ? ownerName(v) : '(unassigned)';
+  if (Array.isArray(v)) return v.join('; ') || '(none)';
+  return (v===''||v==null) ? '(empty)' : String(v);
+}
+function changeCount(){ return computeDiff().length; }
+
+/* ---------- status bar ---------- */
+function renderStatus(){
+  const sb = $('#statusbar'), tx = $('#status-text'), ac = $('#status-actions');
+  ac.innerHTML='';
+  if (App.loadError){
+    sb.classList.remove('dirty');
+    tx.textContent = 'Data not loaded';
+    return;
+  }
+  const n = App.editMode ? changeCount() : 0;
+  const dateStr = App.published.updatedAt ? fmtDate(App.published.updatedAt) : 'unknown date';
+
+  if (n>0){
+    sb.classList.add('dirty');
+    tx.textContent = n + (n===1?' unsaved change':' unsaved changes') + ' — not yet published';
+    ac.appendChild(mkBtn('Review changes','btn btn-quiet',openDiff));
+    ac.appendChild(mkBtn('Discard all drafts','btn btn-danger',discardDrafts));
+    ac.appendChild(mkBtn('Publish','btn btn-publish',openPublish));
+  } else {
+    sb.classList.remove('dirty');
+    tx.textContent = 'v' + App.published.version + ' · updated ' + dateStr +
+      (App.published.updatedBy ? ' by ' + App.published.updatedBy : '');
+    if (App.editMode){
+      ac.appendChild(mkBtn('+ New task','btn btn-primary',()=>openTaskEditor(null)));
+      if (hasHistory()) ac.appendChild(mkBtn('Download previous version','btn btn-quiet',openHistory));
+      ac.appendChild(mkBtn('Lock','btn btn-quiet',()=>setEditMode(false)));
+    }
+  }
+  $('#brand-sub').textContent = App.editMode ? 'edit mode' : '';
+}
+function mkBtn(label,cls,fn){ const b=el('button',cls,esc(label)); b.onclick=fn; return b; }
+
+function fmtDate(iso){
+  const d = new Date(iso);
+  if (isNaN(d)) return iso;
+  return d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+}
+
+function setEditMode(on){
+  if (on && App.readOnly){ toast('Browser storage unavailable — edit mode disabled.'); return; }
+  App.editMode = !!on;
+  refreshAll();
+  toast(on ? 'Edit mode on. Changes save as drafts until you publish.' : 'Edit mode off.');
+}
+
+function discardDrafts(){
+  confirmModal('Discard all drafts?',
+    'This throws away every unpublished change. The published data.json is not affected.',
+    'Discard', ()=>{
+      App.draft = emptyDraft();
+      App.draft.basedOnVersion = App.published.version;
+      saveDraft(); compose(); refreshAll();
+      toast('Drafts discarded.');
+    }, true);
+}
+
+/* ---------- task editor ---------- */
+function openTaskEditor(id){
+  const isNew = !id;
+  const t = isNew
+    ? { id:newTaskId(new Set(App.tasks.map(x=>x.id))), department:'', subFunction:'', task:'',
+        ownerId:null, sopLink:'', description:'', systems:[], automation:'Manual',
+        source:'Manual', workTypeId:'', deleted:false }
+    : App.tasks.find(x=>x.id===id);
+  if (!t) return;
+
+  const draftSystems = t.systems.slice();
+  let curSystems = draftSystems.slice();
+
+  const m = modal(isNew ? 'New task' : 'Edit task');
+  const f = el('form','form');
+  f.onsubmit = e=>e.preventDefault();
+
+  if (t.source==='System' && !isNew){
+    f.appendChild(el('div','sysnote',
+      'This task comes from the claims system. Edits here will be overwritten when the export is automated.'));
+  }
+
+  f.appendChild(pickerField('Department','department', App.idx.deptNames, t.department));
+  f.appendChild(pickerField('Sub-function','subFunction', App.idx.subFunctions, t.subFunction));
+
+  const nameL = el('label');
+  nameL.innerHTML = '<span class="lt">Task</span>';
+  const nameI = el('input'); nameI.type='text'; nameI.name='task'; nameI.value=t.task; nameI.required=true;
+  nameL.appendChild(nameI); f.appendChild(nameL);
+
+  const people = [...App.people.values()].sort((a,b)=>a.displayName.localeCompare(b.displayName));
+  const ownL = el('label');
+  ownL.innerHTML = '<span class="lt">Owner</span>';
+  const ownWrap = el('div','withadd');
+  const ownS = el('select'); ownS.name='ownerId';
+  ownS.appendChild(new Option('— Unassigned —',''));
+  people.forEach(p=>{
+    const o = new Option(p.displayName + (p.role?' · '+p.role:''), p.id);
+    ownS.appendChild(o);
+  });
+  ownS.value = t.ownerId || '';
+  ownWrap.appendChild(ownS);
+  const ownAdd = el('button','btn','+ Add new');
+  ownAdd.type='button';
+  ownAdd.onclick = ()=>{
+    promptModal('Add a person','Canonical display name','', name=>{
+      name = name.trim(); if(!name) return;
+      const pid = 'p_' + normalise(name).replace(/[^a-z0-9]+/g,'_') + '_' + Math.random().toString(36).slice(2,5);
+      patchPerson(pid,{ id:pid, displayName:name, initials:name.split(/\s+/).map(w=>w[0]).join('').toUpperCase(), role:'' });
+      const o = new Option(name, pid); ownS.appendChild(o); ownS.value = pid;
+    });
+  };
+  ownWrap.appendChild(ownAdd);
+  ownL.appendChild(ownWrap);
+  const renameBtn = el('button','btn btn-quiet','Rename this person');
+  renameBtn.type='button'; renameBtn.style.marginTop='8px'; renameBtn.style.fontSize='12px';
+  renameBtn.onclick = ()=>{
+    const pid = ownS.value; if(!pid) return;
+    const p = App.people.get(pid);
+    promptModal('Rename person', 'Every task owned by this person follows the change automatically — ownership is stored by id, not by name.',
+      p.displayName, nn=>{
+        nn=nn.trim(); if(!nn) return;
+        patchPerson(pid,{displayName:nn});
+        [...ownS.options].forEach(o=>{ if(o.value===pid) o.text = nn + (p.role?' · '+p.role:''); });
+        refreshAll(); toast('Renamed. All '+((App.idx.byPerson.get(pid)||[]).length)+' owned tasks follow the change.');
+      });
+  };
+  ownL.appendChild(renameBtn);
+  f.appendChild(ownL);
+
+  const sopL = el('label');
+  sopL.innerHTML = '<span class="lt">SOP link</span>';
+  const sopI = el('input'); sopI.type='text'; sopI.name='sopLink'; sopI.value=t.sopLink;
+  sopI.placeholder='https://…  (leave empty to flag as undocumented)';
+  sopL.appendChild(sopI); f.appendChild(sopL);
+
+  const descL = el('label');
+  descL.innerHTML = '<span class="lt">Description</span>';
+  const descT = el('textarea'); descT.name='description'; descT.value=t.description;
+  descL.appendChild(descT); f.appendChild(descL);
+
+  // systems multi-pick
+  const sysL = el('label');
+  sysL.innerHTML = '<span class="lt">Systems</span>';
+  const sysBox = el('div','syspick');
+  const renderSys = ()=>{
+    sysBox.innerHTML='';
+    const all = [...new Set(App.idx.systems.concat(curSystems))].sort((a,b)=>a.localeCompare(b));
+    all.forEach(s=>{
+      const b = el('button','chip',esc(s)); b.type='button';
+      b.setAttribute('aria-pressed', curSystems.includes(s)?'true':'false');
+      b.onclick = ()=>{
+        curSystems = curSystems.includes(s) ? curSystems.filter(x=>x!==s) : curSystems.concat(s);
+        renderSys();
+      };
+      sysBox.appendChild(b);
+    });
+    const add = el('button','chip','+ Add new'); add.type='button';
+    add.style.borderColor='var(--ec-blue)'; add.style.color='var(--ec-blue)';
+    add.onclick = ()=>promptModal('Add a system','Exact system name as staff would say it','', v=>{
+      v=v.trim(); if(!v) return;
+      if(!curSystems.includes(v)) curSystems.push(v);
+      renderSys();
+    });
+    sysBox.appendChild(add);
+  };
+  renderSys();
+  sysL.appendChild(sysBox); f.appendChild(sysL);
+
+  const autL = el('label');
+  autL.innerHTML = '<span class="lt">Automation</span>';
+  const autS = el('select'); autS.name='automation';
+  autS.appendChild(new Option('— Not recorded —',''));
+  AUTOMATIONS.forEach(a=>autS.appendChild(new Option(a,a)));
+  autS.value = t.automation||'';
+  autL.appendChild(autS); f.appendChild(autL);
+
+  m.body.appendChild(f);
+
+  m.addBtn('Cancel','btn btn-quiet', ()=>m.close());
+  m.addBtn(isNew?'Add task':'Save as draft','btn btn-primary', ()=>{
+    const dep = f.querySelector('[name=department]').value.trim();
+    const nm  = nameI.value.trim();
+    if (!dep || !nm){ toast('Department and Task are both required.'); return; }
+    const patch = {
+      department: dep,
+      subFunction: f.querySelector('[name=subFunction]').value.trim() || '—',
+      task: nm,
+      ownerId: ownS.value || null,
+      sopLink: sopI.value.trim(),
+      description: descT.value.trim(),
+      systems: curSystems.slice(),
+      automation: autS.value
+    };
+    if (isNew){
+      App.draft.tasks[t.id] = { ...patch, __new:true, id:t.id, source:'Manual', workTypeId:'', deleted:false };
+      App.draft.basedOnVersion = App.published.version;
+      saveDraft(); compose();
+    } else {
+      patchTask(t.id, patch);
+    }
+    refreshAll(); m.close(); toast('Saved as draft');
+  });
+}
+
+function pickerField(label, name, options, value){
+  const L = el('label');
+  L.innerHTML = '<span class="lt">'+esc(label)+'</span>';
+  const wrap = el('div','withadd');
+  const S = el('select'); S.name = name;
+  S.appendChild(new Option('— Select —',''));
+  const opts = [...new Set(options.concat(value?[value]:[]))].filter(Boolean).sort((a,b)=>a.localeCompare(b));
+  opts.forEach(o=>S.appendChild(new Option(o,o)));
+  S.value = value || '';
+  wrap.appendChild(S);
+
+  const add = el('button','btn','+ Add new'); add.type='button';
+  add.onclick = ()=>promptModal('Add '+label.toLowerCase(),
+    'Type it exactly as it should appear everywhere. This dropdown exists so "Back Office", "Backoffice" and "BO" do not become three departments.',
+    '', v=>{ v=v.trim(); if(!v) return; S.appendChild(new Option(v,v)); S.value=v; });
+  wrap.appendChild(add);
+
+  const ren = el('button','btn btn-quiet','Rename'); ren.type='button';
+  ren.onclick = ()=>{
+    const old = S.value; if(!old) return;
+    const affected = App.tasks.filter(t=>!t.deleted && t[name]===old);
+    promptModal('Rename '+label.toLowerCase(),
+      'Renaming updates all '+affected.length+' row'+(affected.length===1?'':'s')+' that currently use “'+old+'”.',
+      old, nn=>{
+        nn=nn.trim(); if(!nn||nn===old) return;
+        affected.forEach(t=>patchTask(t.id,{[name]:nn}));
+        [...S.options].forEach(o=>{ if(o.value===old){ o.value=nn; o.text=nn; } });
+        S.value = nn;
+        refreshAll();
+        toast('Renamed on '+affected.length+' row'+(affected.length===1?'':'s')+'.');
+      });
+  };
+  wrap.appendChild(ren);
+
+  L.appendChild(wrap);
+  return L;
+}
+
+/* ---------- diff modal ---------- */
+function openDiff(){
+  const d = computeDiff();
+  const m = modal('Review changes');
+  if (!d.length){ m.body.appendChild(el('p','','No unpublished changes.')); }
+  const list = el('div','difflist');
+  d.forEach(r=>{
+    const row = el('div','diffrow');
+    let head = '<div class="dt">'+esc(r.task);
+    if (r.kind==='new')     head += '<span class="tag" style="color:var(--ec-blue)">new task</span>';
+    if (r.kind==='delete')  head += '<span class="tag" style="color:#FF8F8F">deleted</span>';
+    if (r.kind==='restore') head += '<span class="tag">restored</span>';
+    head += '</div>';
+    row.innerHTML = head;
+    if (r.field){
+      row.innerHTML += '<div class="df">'+esc(FIELD_LABEL[r.field]||r.field)+'</div>' +
+        '<div class="old">'+esc(r.old)+'</div><div class="new">'+esc(r.neu)+'</div>';
+    }
+    list.appendChild(row);
+  });
+  m.body.appendChild(list);
+  m.addBtn('Close','btn btn-quiet',()=>m.close());
+  m.addBtn('Publish','btn btn-publish',()=>{ m.close(); openPublish(); });
+}
+
+/* ---------- publish ---------- */
+function buildPublishPayload(){
+  const nextVersion = App.published.version + 1;
+  const tasks = App.tasks
+    .slice()
+    .sort((a,b)=>a.id.localeCompare(b.id))
+    .map(t=>({
+      id:t.id, department:t.department, subFunction:t.subFunction, task:t.task,
+      ownerId:t.ownerId||null, sopLink:t.sopLink||'', description:t.description||'',
+      systems:t.systems||[], automation:t.automation||'', source:t.source||'Manual',
+      workTypeId:t.workTypeId||'', ...(t.deleted?{deleted:true}:{})
+    }));
+  const people = [...App.people.values()]
+    .sort((a,b)=>a.id.localeCompare(b.id))
+    .map(p=>({id:p.id, displayName:p.displayName, initials:p.initials||'', role:p.role||''}));
+
+  return {
+    obj: {
+      schemaVersion: CODE_SCHEMA_VERSION,
+      version: nextVersion,
+      updatedAt: new Date().toISOString().replace(/\.\d+Z$/,'Z'),
+      updatedBy: sess.get('ec-respmap-editor') || 'Editor',
+      people, tasks
+    },
+    nextVersion
+  };
+}
+
+function openPublish(){
+  const diff = computeDiff();
+  if (!diff.length){ toast('Nothing to publish.'); return; }
+
+  const m = modal('Publish');
+  const who = sess.get('ec-respmap-editor') || '';
+  const deptCounts = {};
+  diff.forEach(r=>{
+    const t = App.tasks.find(x=>x.id===r.id);
+    const d = t ? t.department : 'People';
+    deptCounts[d] = (deptCounts[d]||0)+1;
+  });
+  const msg = 'data: ' + diff.length + ' change' + (diff.length===1?'':'s') + ' to ' +
+    Object.keys(deptCounts).join(', ');
+
+  m.body.innerHTML =
+    '<p>'+diff.length+' change'+(diff.length===1?'':'s')+' will become <span class="mono">version '+
+    (App.published.version+1)+'</span>.</p>';
+
+  const f = el('form','form'); f.onsubmit=e=>e.preventDefault();
+  const nl = el('label');
+  nl.innerHTML='<span class="lt">Your name — goes into updatedBy</span>';
+  const ni = el('input'); ni.type='text'; ni.value=who; ni.placeholder='Tiken';
+  nl.appendChild(ni); f.appendChild(nl);
+  m.body.appendChild(f);
+
+  m.body.appendChild(el('div','sysnote',
+    '<strong>Path A — download and commit.</strong> Downloads the finished <span class="mono">data.json</span>. ' +
+    'Drop it into the repo root through github.com or <span class="mono">git commit</span>. Suggested commit message:<br>' +
+    '<span class="mono" style="color:var(--paper);display:block;margin-top:6px">'+esc(msg)+' ('+esc(who||'you')+', '+
+    new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short'})+')</span>'));
+
+  m.addBtn('Cancel','btn btn-quiet',()=>m.close());
+  m.addBtn('Commit from browser…','btn btn-quiet',()=>{ sess.set('ec-respmap-editor',ni.value.trim()); m.close(); openGitHubPublish(msg); });
+  m.addBtn('Download data.json','btn btn-publish',()=>{
+    sess.set('ec-respmap-editor', ni.value.trim());
+    doDownloadPublish();
+    m.close();
+  });
+}
+
+function doDownloadPublish(){
+  const {obj,nextVersion} = buildPublishPayload();
+  const text = JSON.stringify(obj,null,2);
+  downloadFile('data.json', text, 'application/json');
+  markPublished(nextVersion, text);
+  toast('data.json downloaded. Commit it to the repo — the app clears drafts once it sees v'+nextVersion+'.');
+}
+
+function markPublished(nextVersion, text){
+  pushHistory(nextVersion, text);
+  App.draft.pendingPublishVersion = nextVersion;
+  saveDraft();
+  refreshAll();
+}
+
+function downloadFile(name, text, mime){
+  const blob = new Blob([text],{type:mime||'text/plain'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download=name; document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); },0);
+}
+
+/* ---------- history (last 3 published snapshots) ---------- */
+function pushHistory(version, text){
+  let h = [];
+  try{ h = JSON.parse(store.get(HISTORY_KEY)||'[]'); }catch(e){ h=[]; }
+  h.unshift({version, at:new Date().toISOString(), text});
+  h = h.slice(0,3);
+  store.set(HISTORY_KEY, JSON.stringify(h));
+}
+function hasHistory(){
+  try{ return (JSON.parse(store.get(HISTORY_KEY)||'[]')).length>0; }catch(e){ return false; }
+}
+function openHistory(){
+  let h=[]; try{ h=JSON.parse(store.get(HISTORY_KEY)||'[]'); }catch(e){}
+  const m = modal('Previous versions');
+  m.body.appendChild(el('p','','The last three files this browser produced. The repo history is the real audit trail — this is only for when git is not to hand.'));
+  h.forEach(s=>{
+    const r = el('div','diffrow');
+    r.innerHTML = '<div class="dt">version '+s.version+'</div><div class="df">'+fmtDate(s.at)+'</div>';
+    const b = el('button','btn btn-quiet','Download');
+    b.style.marginTop='8px';
+    b.onclick = ()=>downloadFile('data.v'+s.version+'.json', s.text, 'application/json');
+    r.appendChild(b);
+    m.body.appendChild(r);
+  });
+  m.addBtn('Close','btn btn-quiet',()=>m.close());
+}
+
+/* ---------- Path B: GitHub Contents API ---------- */
+function getRepoCfg(){
+  try{ return JSON.parse(store.get(REPO_KEY)||'{}'); }catch(e){ return {}; }
+}
+function openGitHubPublish(commitMsgBase){
+  const cfg = getRepoCfg();
+  const m = modal('Commit straight to GitHub');
+
+  m.body.appendChild(el('div','sysnote',
+    'The token is held in <span class="mono">sessionStorage</span> only — it dies when this tab closes. ' +
+    'It is never written into the repo, into data.json, or into any file. ' +
+    'Use a fine-grained PAT scoped to <strong>this one repository</strong>, permission <strong>Contents: read and write</strong>, nothing else, short expiry.'));
+
+  const f = el('form','form'); f.onsubmit=e=>e.preventDefault();
+  const two = el('div','two');
+  two.appendChild(labelled('Owner','owner',cfg.owner||''));
+  two.appendChild(labelled('Repository','repo',cfg.repo||''));
+  f.appendChild(two);
+  f.appendChild(labelled('Branch','branch',cfg.branch||'main'));
+  const tl = el('label');
+  tl.innerHTML='<span class="lt">Fine-grained personal access token</span>';
+  const ti = el('input'); ti.type='password'; ti.autocomplete='off'; ti.value = sess.get(TOKEN_KEY)||'';
+  ti.placeholder='github_pat_…';
+  tl.appendChild(ti);
+  tl.appendChild(el('div','hint','Held for this tab only.'));
+  f.appendChild(tl);
+  m.body.appendChild(f);
+
+  const out = el('div','hint'); out.style.marginTop='4px';
+  m.body.appendChild(out);
+
+  m.addBtn('Forget token','btn btn-danger',()=>{ sess.del(TOKEN_KEY); ti.value=''; toast('Token forgotten.'); });
+  m.addBtn('Cancel','btn btn-quiet',()=>m.close());
+  const go = m.addBtn('Commit','btn btn-publish', async ()=>{
+    const owner=f.querySelector('[name=owner]').value.trim();
+    const repo =f.querySelector('[name=repo]').value.trim();
+    const branch=f.querySelector('[name=branch]').value.trim()||'main';
+    const token=ti.value.trim();
+    if (!owner||!repo||!token){ out.textContent='Owner, repository and token are all required.'; return; }
+    store.set(REPO_KEY, JSON.stringify({owner,repo,branch}));
+    sess.set(TOKEN_KEY, token);
+    go.disabled=true; out.textContent='Committing…';
+    try{
+      const res = await ghCommit({owner,repo,branch,token,commitMsgBase});
+      out.innerHTML = 'Committed as <span class="mono">'+esc(res.sha.slice(0,7))+
+        '</span>. Pages redeploys in under a minute.';
+      toast('Committed. Reload once Pages has redeployed.');
+      setTimeout(()=>m.close(), 2200);
+    }catch(err){
+      out.innerHTML = '<span style="color:var(--ec-lime)">'+esc(err.message)+
+        '</span><br>Falling back to a download so nothing is trapped in the browser.';
+      doDownloadPublish();
+      go.disabled=false;
+    }
+  });
+}
+function labelled(text,name,value){
+  const L=el('label'); L.innerHTML='<span class="lt">'+esc(text)+'</span>';
+  const I=el('input'); I.type='text'; I.name=name; I.value=value;
+  L.appendChild(I); return L;
+}
+
+async function ghCommit({owner,repo,branch,token,commitMsgBase}){
+  const api = 'https://api.github.com/repos/'+encodeURIComponent(owner)+'/'+encodeURIComponent(repo)+'/contents/data.json';
+  const H = { 'Authorization':'Bearer '+token, 'Accept':'application/vnd.github+json',
+              'X-GitHub-Api-Version':'2022-11-28' };
+
+  // Always send the sha of the file we are replacing.
+  let sha = null;
+  const cur = await fetch(api+'?ref='+encodeURIComponent(branch), {headers:H});
+  if (cur.ok){ sha = (await cur.json()).sha; }
+  else if (cur.status !== 404){
+    throw new Error('Could not read the current data.json (HTTP '+cur.status+').');
+  }
+
+  const {obj,nextVersion} = buildPublishPayload();
+  const text = JSON.stringify(obj,null,2);
+  const b64 = btoa(unescape(encodeURIComponent(text)));
+  const who = obj.updatedBy;
+  const message = commitMsgBase + ' (' + who + ', ' +
+    new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short'}) + ')';
+
+  const put = await fetch(api, {
+    method:'PUT', headers:{...H,'Content-Type':'application/json'},
+    body: JSON.stringify({ message, content:b64, branch, ...(sha?{sha}:{}) })
+  });
+  if (put.status === 409 || put.status === 422){
+    throw new Error('data.json changed in the repo since this page loaded (HTTP '+put.status+'). Reload, re-check your drafts, then publish again — do not retry blindly.');
+  }
+  if (!put.ok){
+    let d=''; try{ d = (await put.json()).message||''; }catch(e){}
+    throw new Error('GitHub refused the commit (HTTP '+put.status+(d?': '+d:'')+').');
+  }
+  const body = await put.json();
+  markPublished(nextVersion, text);
+  return { sha: body.commit.sha };
+}
+
+/* ==========================================================================
+   6. MODALS / TOAST
+   ========================================================================== */
+function modal(title){
+  const scrim = el('div','scrim');
+  const box = el('div','modal');
+  const head = el('header','', '<h2>'+esc(title)+'</h2>');
+  const body = el('div','body');
+  const foot = el('footer');
+  box.append(head,body,foot); scrim.appendChild(box);
+  $('#modal-root').appendChild(scrim);
+
+  const close = ()=>{ scrim.remove(); document.removeEventListener('keydown',key); };
+  const key = e=>{ if(e.key==='Escape'){ e.stopPropagation(); close(); } };
+  document.addEventListener('keydown',key);
+  scrim.addEventListener('mousedown',e=>{ if(e.target===scrim) close(); });
+
+  const api = { body, close,
+    addBtn(label,cls,fn){ const b=el('button',cls,esc(label)); b.type='button'; b.onclick=fn; foot.appendChild(b); return b; } };
+  setTimeout(()=>{ const fst = body.querySelector('input,select,textarea,button'); if(fst) fst.focus(); },30);
+  return api;
+}
+function confirmModal(title,text,okLabel,fn,danger){
+  const m = modal(title);
+  m.body.appendChild(el('p','',esc(text)));
+  m.addBtn('Cancel','btn btn-quiet',()=>m.close());
+  m.addBtn(okLabel, danger?'btn btn-danger':'btn btn-primary', ()=>{ m.close(); fn(); });
+}
+function promptModal(title,hint,value,fn){
+  const m = modal(title);
+  if (hint) m.body.appendChild(el('p','',esc(hint)));
+  const f = el('form','form'); f.onsubmit=e=>{e.preventDefault(); ok();};
+  const L = el('label'); const I = el('input'); I.type='text'; I.value=value||'';
+  L.appendChild(I); f.appendChild(L); m.body.appendChild(f);
+  const ok = ()=>{ const v=I.value; m.close(); fn(v); };
+  m.addBtn('Cancel','btn btn-quiet',()=>m.close());
+  m.addBtn('OK','btn btn-primary',ok);
+}
+let toastT=null;
+function toast(msg){
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastT); toastT = setTimeout(()=>t.classList.remove('show'), 4200);
+}
+
+/* ==========================================================================
+   7. VIEW SWITCHING + FOOTER
+   ========================================================================== */
+function hasWebGL(){
+  try{
+    const c = document.createElement('canvas');
+    return !!(window.WebGLRenderingContext && (c.getContext('webgl')||c.getContext('experimental-webgl')));
+  }catch(e){ return false; }
+}
+
+function setView(v){
+  App.view = v;
+  const list = $('#view-list'), map = $('#view-map');
+  $('#btn-view-list').setAttribute('aria-pressed', v==='list');
+  $('#btn-view-map').setAttribute('aria-pressed', v==='map');
+  list.classList.toggle('hidden', v!=='list');
+  list.setAttribute('aria-hidden', v!=='list');
+  map.classList.toggle('hidden', v!=='map');
+  map.setAttribute('aria-hidden', v!=='map');
+  if (v==='map'){ MapView.open(); }
+  else { MapView.pause(); $('#q').focus(); }
+}
+
+function renderFooter(){
+  const i = App.idx;
+  if (!i.live){ return; }
+  $('#f-counts').textContent =
+    i.live.length + ' tasks · ' + i.deptNames.length + ' departments · ' +
+    App.people.size + ' people · ' + i.missingSop + ' without an SOP';
+  const fi = $('#f-issues'); fi.innerHTML='';
+  const n = App.published ? App.published.issues.length : 0;
+  if (n){
+    const b = el('span','issue', n+' data issue'+(n===1?'':'s'));
+    b.onclick = ()=>{
+      const m = modal('Data issues');
+      m.body.appendChild(el('p','','Rows the loader could not use as written. Nothing was invented to cover them.'));
+      const ul = el('div','difflist');
+      App.published.issues.forEach(s=>ul.appendChild(el('div','diffrow',esc(s))));
+      m.body.appendChild(ul);
+      m.addBtn('Close','btn btn-quiet',()=>m.close());
+    };
+    fi.appendChild(b);
+  }
+  $('#f-mode').textContent = App.readOnly ? 'storage unavailable — read only'
+                            : (App.editMode ? 'edit mode' : 'read only');
+}
+
+function refreshAll(){
+  renderStatus(); renderChips(); renderResults(); renderFooter();
+  if (App.view==='map') MapView.rebuild();
+}
+
+/* ==========================================================================
+   8. RADIAL MAP — lazy loaded Three.js
+   ==========================================================================
+   Layout is computed in plain JS and verified independently of the renderer.
+   Positions are written straight into buffer attributes; the whole node set is
+   one draw call and the whole link set is a second.
+   Labels are DOM elements projected from world space each frame.
+   ========================================================================== */
+
+const MapView = (function(){
+  let THREE=null, loading=false, ready=false, running=false;
+  let renderer, scene, camera, pointsGeo, points, linksGeo, links, mat;
+  let nodes=[], links2=[], labelPool=[], labelEls=new Map();
+  let canvas, labelLayer, W=0, H=0, dpr=1;
+  let drift=1, driftTarget=1, spin=0, hoverIdx=-1, lastT=0;
+  let focusNode=null, searching=false;
+  let cam = { x:0, y:0, zoom:1 };
+  let dragging=false, dragStart=null, camStart=null, moved=false;
+  let raf=0;
+
+  const R1=140, R2=300, R3=470;
+  const NODE_PX = { root:16, dept:13, sub:9, task:6 };
+
+  /* ---------- layout ---------- */
+  function buildTree(){
+    const live = App.idx.live;
+    const root = { kind:'root', label:'Operation', children:[], angle:0, r:0, expanded:true, id:'__root' };
+    const depts = new Map();
+    live.forEach(t=>{
+      if (!depts.has(t.department))
+        depts.set(t.department, { kind:'dept', label:t.department, parent:root, children:[], subs:new Map(), expanded:false, id:'d:'+t.department });
+      const d = depts.get(t.department);
+      if (!d.subs.has(t.subFunction))
+        d.subs.set(t.subFunction, { kind:'sub', label:t.subFunction, parent:d, children:[], expanded:false, id:'s:'+t.department+'|'+t.subFunction });
+      const s = d.subs.get(t.subFunction);
+      s.children.push({ kind:'task', label:t.task, parent:s, children:[], task:t, expanded:false, id:'t:'+t.id });
+    });
+    depts.forEach(d=>{ d.children = [...d.subs.values()].sort((a,b)=>a.label.localeCompare(b.label)); });
+    root.children = [...depts.values()].sort((a,b)=>a.label.localeCompare(b.label));
+
+    // leaf counts drive the angular allocation so dense departments do not crowd
+    const leaves = n => n.children.length ? n.children.reduce((a,c)=>a+leaves(c),0) : 1;
+    const total = leaves(root);
+    const GAP = 0.035;   // radians of padding between departments
+
+    let a = -Math.PI/2;
+    root.children.forEach(d=>{
+      const span = (leaves(d)/total) * (Math.PI*2 - GAP*root.children.length);
+      d.a0 = a; d.a1 = a+span; d.angle = a+span/2; d.r = R1;
+      let sa = a;
+      d.children.forEach(s=>{
+        const sspan = (leaves(s)/leaves(d)) * span;
+        s.a0=sa; s.a1=sa+sspan; s.angle=sa+sspan/2; s.r=R2;
+        const k = s.children.length;
+        s.children.forEach((t,i)=>{
+          t.angle = k===1 ? s.angle : sa + sspan*((i+0.5)/k);
+          t.r = R3;
+        });
+        sa += sspan;
+      });
+      a += span + GAP;
+    });
+    root.angle=0; root.r=0;
+
+    // flatten, depth-first, parents before children
+    const out=[]; const walk=n=>{ out.push(n); n.children.forEach(walk); };
+    walk(root);
+    out.forEach((n,i)=>{
+      n.idx=i;
+      n.vis = n.kind==='root' || n.kind==='dept' ? 1 : 0;
+      n.t   = n.vis;                       // animated 0..1
+      n.phase = Math.random()*Math.PI*2;
+      n.col = n.kind==='task' ? nodeColour(n.task)
+            : n.kind==='dept' ? '#26408F'
+            : n.kind==='sub'  ? '#3A5AB5' : '#0084CC';
+      n.px=0; n.py=0; n.dim=1;
+    });
+    nodes = out;
+    links2 = out.filter(n=>n.parent).map(n=>({a:n.parent,b:n}));
+  }
+
+  function targetVisible(n){
+    if (n.kind==='root'||n.kind==='dept') return 1;
+    return n.parent && n.parent.expanded && targetVisible(n.parent) ? 1 : 0;
+  }
+
+  /* ---------- three.js bootstrap ---------- */
+  function loadThree(){
+    if (THREE) return Promise.resolve(THREE);
+    if (loading) return loading;
+    loading = new Promise((res,rej)=>{
+      const s = document.createElement('script');
+      s.src = './vendor/three.min.js';
+      s.onload = ()=>{ THREE = window.THREE; res(THREE); };
+      s.onerror = ()=>rej(new Error('three.min.js failed to load'));
+      document.head.appendChild(s);
+    });
+    return loading;
+  }
+
+  const VERT = `
+    attribute vec3 aColor; attribute float aSize; attribute float aAlpha;
+    varying vec3 vColor; varying float vAlpha;
+    void main(){
+      vColor = aColor; vAlpha = aAlpha;
+      vec4 mv = modelViewMatrix * vec4(position,1.0);
+      gl_PointSize = aSize;
+      gl_Position = projectionMatrix * mv;
+    }`;
+  const FRAG = `
+    varying vec3 vColor; varying float vAlpha;
+    void main(){
+      float d = length(gl_PointCoord - vec2(0.5));
+      if (d > 0.5) discard;
+      float core = smoothstep(0.50, 0.36, d);
+      float halo = smoothstep(0.50, 0.05, d) * 0.30;
+      float a = (core + halo) * vAlpha;
+      if (a <= 0.003) discard;
+      gl_FragColor = vec4(vColor, a);
+    }`;
+
+  function init(){
+    canvas = $('#map-canvas');
+    labelLayer = $('#map-labels');
+    renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
+    renderer.setClearColor(0x000000, 0);
+    scene = new THREE.Scene();
+    camera = new THREE.OrthographicCamera(-1,1,1,-1,-1000,1000);
+    camera.position.z = 10;
+
+    mat = new THREE.ShaderMaterial({
+      vertexShader:VERT, fragmentShader:FRAG,
+      transparent:true, depthTest:false, depthWrite:false
+    });
+
+    const lmat = new THREE.LineBasicMaterial({
+      vertexColors:true, transparent:true, opacity:1,
+      blending:THREE.AdditiveBlending, depthTest:false, depthWrite:false
+    });
+    linksGeo = new THREE.BufferGeometry();
+    links = new THREE.LineSegments(linksGeo, lmat);
+    links.renderOrder = 0;
+    scene.add(links);
+
+    pointsGeo = new THREE.BufferGeometry();
+    points = new THREE.Points(pointsGeo, mat);
+    points.renderOrder = 1;
+    scene.add(points);
+
+    bindInput();
+    ready = true;
+  }
+
+  function allocBuffers(){
+    const n = nodes.length;
+    pointsGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(n*3),3));
+    pointsGeo.setAttribute('aColor',   new THREE.BufferAttribute(new Float32Array(n*3),3));
+    pointsGeo.setAttribute('aSize',    new THREE.BufferAttribute(new Float32Array(n),1));
+    pointsGeo.setAttribute('aAlpha',   new THREE.BufferAttribute(new Float32Array(n),1));
+
+    const m = links2.length;
+    linksGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(m*6),3));
+    linksGeo.setAttribute('color',    new THREE.BufferAttribute(new Float32Array(m*6),3));
+
+    // static per-node colour + size
+    const c = pointsGeo.attributes.aColor.array, s = pointsGeo.attributes.aSize.array;
+    nodes.forEach((nd,i)=>{
+      const col = hex2rgb(nd.col);
+      c[i*3]=col[0]; c[i*3+1]=col[1]; c[i*3+2]=col[2];
+      s[i] = NODE_PX[nd.kind] * dpr;
+    });
+    pointsGeo.attributes.aColor.needsUpdate = true;
+    pointsGeo.attributes.aSize.needsUpdate = true;
+  }
+
+  function hex2rgb(h){
+    const n = parseInt(h.slice(1),16);
+    return [((n>>16)&255)/255, ((n>>8)&255)/255, (n&255)/255];
+  }
+
+  /* ---------- resize ---------- */
+  function resize(){
+    const r = canvas.getBoundingClientRect();
+    W = Math.max(1, r.width); H = Math.max(1, r.height);
+    dpr = Math.min(window.devicePixelRatio||1, 2);   // cap DPR at 2
+    renderer.setPixelRatio(dpr);
+    renderer.setSize(W,H,false);
+    // fit ~1150 world units across the smaller axis
+    const fit = 1150;
+    const scale = Math.min(W,H)/fit;
+    const hw = W/2/scale, hh = H/2/scale;
+    camera.left=-hw; camera.right=hw; camera.top=hh; camera.bottom=-hh;
+    camera.updateProjectionMatrix();
+    if (pointsGeo){
+      const s = pointsGeo.attributes.aSize.array;
+      nodes.forEach((nd,i)=>{ s[i] = NODE_PX[nd.kind]*dpr; });
+      pointsGeo.attributes.aSize.needsUpdate = true;
+    }
+    worldScale = scale;
+  }
+  let worldScale = 1;
+
+  /* ---------- input ---------- */
+  function bindInput(){
+    canvas.addEventListener('pointerenter', ()=>{ driftTarget = 0; });
+    canvas.addEventListener('pointerleave', ()=>{ driftTarget = REDUCED_MOTION?0:1; hoverIdx=-1; });
+
+    canvas.addEventListener('pointerdown', e=>{
+      canvas.setPointerCapture(e.pointerId);
+      dragging=true; moved=false; focusNode=null; camZoomTarget=null;
+      dragStart={x:e.clientX,y:e.clientY}; camStart={x:cam.x,y:cam.y};
+      canvas.classList.add('grabbing');
+    });
+    canvas.addEventListener('pointermove', e=>{
+      const r = canvas.getBoundingClientRect();
+      const mx = e.clientX-r.left, my = e.clientY-r.top;
+      if (dragging){
+        const dx = e.clientX-dragStart.x, dy = e.clientY-dragStart.y;
+        if (Math.abs(dx)+Math.abs(dy) > 4) moved=true;
+        cam.x = camStart.x - dx/(worldScale*cam.zoom);
+        cam.y = camStart.y + dy/(worldScale*cam.zoom);
+      } else {
+        hitTest(mx,my);
+      }
+    });
+    const up = e=>{
+      if (!dragging) return;
+      dragging=false; canvas.classList.remove('grabbing');
+      try{ canvas.releasePointerCapture(e.pointerId); }catch(err){}
+      if (!moved){
+        const r = canvas.getBoundingClientRect();
+        hitTest(e.clientX-r.left, e.clientY-r.top);
+        if (hoverIdx>=0) activate(nodes[hoverIdx]);
+      }
+    };
+    canvas.addEventListener('pointerup', up);
+    canvas.addEventListener('pointercancel', ()=>{ dragging=false; canvas.classList.remove('grabbing'); });
+
+    canvas.addEventListener('wheel', e=>{
+      e.preventDefault();
+      focusNode=null; camZoomTarget=null;
+      const f = Math.exp(-e.deltaY*0.0016);
+      cam.zoom = Math.min(4, Math.max(0.45, cam.zoom*f));
+    }, {passive:false});
+
+    canvas.addEventListener('keydown', e=>{ if(e.key==='Escape') closePanels(); });
+
+    $('#map-q').addEventListener('input', e=>{ mapSearch(e.target.value); });
+  }
+
+  function hitTest(mx,my){
+    let best=-1, bd=15*15;
+    for (let i=0;i<nodes.length;i++){
+      const n = nodes[i];
+      if (n.t < 0.35) continue;
+      const dx = n.px-mx, dy = n.py-my;
+      const d = dx*dx+dy*dy;
+      if (d < bd){ bd=d; best=i; }
+    }
+    if (best !== hoverIdx){
+      hoverIdx = best;
+      canvas.style.cursor = best>=0 ? 'pointer' : (dragging?'grabbing':'grab');
+    }
+  }
+
+  function activate(n){
+    if (n.kind==='task'){ openDetail(n.task.id); return; }
+    if (n.kind==='root'){
+      const anyOpen = nodes.some(x=>x.kind==='dept' && x.expanded);
+      nodes.forEach(x=>{ if(x.kind==='dept') x.expanded = !anyOpen; });
+      return;
+    }
+    n.expanded = !n.expanded;
+    if (!n.expanded) collapseAll(n);
+  }
+  function collapseAll(n){ n.children.forEach(c=>{ c.expanded=false; collapseAll(c); }); }
+
+  function expandPathTo(n){
+    let p = n.parent;
+    while (p){ p.expanded = true; p = p.parent; }
+  }
+
+  function mapSearch(q){
+    const nq = normalise(q).trim();
+    if (!nq){ nodes.forEach(n=>n.match=false); searching=false; focusNode=null; return; }
+    searching = true;
+    let first=null;
+    nodes.forEach(n=>{
+      const hay = n.kind==='task'
+        ? (n.task._search||normalise(n.task.task))
+        : normalise(n.label);
+      n.match = hay.includes(nq);
+      if (n.match && !first && n.kind==='task') first = n;
+    });
+    if (first){
+      expandPathTo(first);
+      // Hand control to the user, then let the camera track the node's live world
+      // position. Centring on cos(angle)*r would be wrong: the frame also applies the
+      // accumulated drift rotation and the outward expansion easing.
+      driftTarget = 0;
+      focusNode = first;
+      camZoomTarget = Math.max(cam.zoom, 1.7);
+    }
+  }
+  let camZoomTarget = null;
+
+  /* ---------- labels ---------- */
+  function labelFor(n){
+    let e = labelEls.get(n.id);
+    if (!e){
+      e = labelPool.pop() || document.createElement('div');
+      e.className = 'lbl lbl-' + n.kind;
+      e.textContent = n.kind==='task' ? clip(n.label,34) : n.label;
+      labelLayer.appendChild(e);
+      labelEls.set(n.id, e);
+    }
+    return e;
+  }
+  function clip(s,n){ return s.length>n ? s.slice(0,n-1)+'…' : s; }
+  function releaseLabel(n){
+    const e = labelEls.get(n.id);
+    if (e){ labelEls.delete(n.id); e.remove(); if(labelPool.length<80) labelPool.push(e); }
+  }
+
+  function labelWanted(n){
+    if (n.t < 0.5) return false;
+    if (n.kind==='root') return false;
+    if (n.kind==='dept') return true;
+    if (n.kind==='sub')  return true;
+    return cam.zoom > 1.25;    // task labels only once the user has zoomed in
+  }
+
+  /* ---------- frame ---------- */
+  function frame(now){
+    raf = requestAnimationFrame(frame);
+    if (!running) return;
+    const dt = Math.min(0.05, (now - lastT)/1000 || 0.016);
+    lastT = now;
+
+    // ambient drift: eases to a stop the instant the pointer arrives
+    const k = 1 - Math.pow(0.001, dt/0.4);           // ~400ms to settle
+    drift += (driftTarget - drift) * k;
+    if (!REDUCED_MOTION) spin += dt * (Math.PI*2/120) * drift;
+
+    // expansion state
+    nodes.forEach(n=>{
+      const want = targetVisible(n);
+      if (REDUCED_MOTION){ n.t = want; }
+      else {
+        const speed = want ? 3.4 : 6.0;
+        n.t += (want - n.t) * (1 - Math.exp(-speed*dt));
+        if (Math.abs(want-n.t) < 0.002) n.t = want;
+      }
+    });
+
+    // hover dimming: hovered node + its ancestors stay lit, everything else drops to 25%
+    const hov = hoverIdx>=0 ? nodes[hoverIdx] : null;
+    const lit = new Set();
+    if (hov){ let p=hov; while(p){ lit.add(p); p=p.parent; } }
+    nodes.forEach(n=>{
+      let want = !hov ? 1 : (lit.has(n) ? 1 : 0.25);
+      // an active search dims the same way a hover does, so the match stands out
+      if (searching && !hov) want = n.match ? 1 : 0.25;
+      n.dim += (want-n.dim) * (REDUCED_MOTION?1:(1-Math.exp(-12*dt)));
+    });
+
+    // positions
+    const pos = pointsGeo.attributes.position.array;
+    const alp = pointsGeo.attributes.aAlpha.array;
+    const t = now/1000;
+
+    nodes.forEach((n,i)=>{
+      const pr = n.parent ? n.parent.r : 0;
+      const pa = n.parent ? n.parent.angle : n.angle;
+      const ease = REDUCED_MOTION ? n.t : easeOutCubic(n.t);
+      const r = pr + (n.r - pr)*ease + (REDUCED_MOTION?0:Math.sin(t*0.55 + n.phase)*2.2*drift);
+      const a = pa + (n.angle - pa)*ease + spin;
+      const x = Math.cos(a)*r, y = Math.sin(a)*r;
+      n.wx=x; n.wy=y;
+      pos[i*3]=x; pos[i*3+1]=y; pos[i*3+2]=0;
+      let al = n.t * n.dim;
+      if (n.match) al = Math.min(1, al*1.0 + 0.0);
+      alp[i] = al;
+      // screen projection for hit-test and labels
+      n.px = (x - cam.x)*worldScale*cam.zoom + W/2;
+      n.py = H/2 - (y - cam.y)*worldScale*cam.zoom;
+    });
+    pointsGeo.attributes.position.needsUpdate = true;
+    pointsGeo.attributes.aAlpha.needsUpdate = true;
+    pointsGeo.setDrawRange(0, nodes.length);
+
+    // links
+    const lp = linksGeo.attributes.position.array;
+    const lc = linksGeo.attributes.color.array;
+    links2.forEach((L,i)=>{
+      const A=L.a, B=L.b;
+      lp[i*6]=A.wx; lp[i*6+1]=A.wy; lp[i*6+2]=0;
+      lp[i*6+3]=B.wx; lp[i*6+4]=B.wy; lp[i*6+5]=0;
+      const v = Math.min(A.t,B.t) * Math.min(A.dim,B.dim) * 0.30;
+      const base = B.kind==='task' ? [0.13,0.20,0.42] : [0.15,0.25,0.56];
+      lc[i*6]=base[0]*v; lc[i*6+1]=base[1]*v; lc[i*6+2]=base[2]*v;
+      lc[i*6+3]=base[0]*v; lc[i*6+4]=base[1]*v; lc[i*6+5]=base[2]*v;
+    });
+    linksGeo.attributes.position.needsUpdate = true;
+    linksGeo.attributes.color.needsUpdate = true;
+
+    // camera — track a search match to its live position, then release
+    if (focusNode){
+      const kk = REDUCED_MOTION ? 1 : (1 - Math.exp(-7*dt));
+      cam.x += (focusNode.wx - cam.x) * kk;
+      cam.y += (focusNode.wy - cam.y) * kk;
+      if (camZoomTarget != null) cam.zoom += (camZoomTarget - cam.zoom) * kk;
+      const near = Math.hypot(focusNode.wx-cam.x, focusNode.wy-cam.y) < 1.5;
+      if (near && focusNode.t > 0.99) { focusNode = null; camZoomTarget = null; }
+    }
+    camera.position.x = cam.x; camera.position.y = cam.y;
+    camera.zoom = cam.zoom; camera.updateProjectionMatrix();
+
+    // labels
+    nodes.forEach(n=>{
+      if (labelWanted(n)){
+        if (n.px < -160 || n.px > W+160 || n.py < -40 || n.py > H+40){ releaseLabel(n); return; }
+        const e = labelFor(n);
+        const off = n.kind==='task' ? 13 : (n.kind==='sub' ? 15 : 20);
+        const ox = Math.cos(n.angle+spin)*off, oy = Math.sin(n.angle+spin)*off;
+        e.style.transform = 'translate(-50%,-50%) translate(' +
+          (n.px+ox).toFixed(1) + 'px,' + (n.py-oy).toFixed(1) + 'px)';
+        e.style.opacity = (n.t * n.dim).toFixed(2);
+      } else releaseLabel(n);
+    });
+
+    renderer.render(scene,camera);
+  }
+  function easeOutCubic(x){ return 1 - Math.pow(1-x,3); }
+
+  /* ---------- public ---------- */
+  let ro=null;
+  return {
+    async open(){
+      if (!ready){
+        try{ await loadThree(); }
+        catch(e){ toast('Map could not start — three.min.js is missing from /vendor.'); setView('list'); return; }
+        buildTree(); init(); allocBuffers(); resize();
+        ro = new ResizeObserver(()=>resize()); ro.observe($('#view-map'));
+        driftTarget = REDUCED_MOTION ? 0 : 1;
+      } else { resize(); }
+      running = true; lastT = performance.now();
+      if (!raf) raf = requestAnimationFrame(frame);
+      canvas.setAttribute('tabindex','0');
+    },
+    pause(){ running=false; },
+    rebuild(){
+      if (!ready) return;
+      const openIds = new Set(nodes.filter(n=>n.expanded).map(n=>n.id));
+      labelEls.forEach((e,k)=>e.remove()); labelEls.clear();
+      buildTree(); allocBuffers();
+      nodes.forEach(n=>{ if(openIds.has(n.id)) n.expanded=true; });
+      resize();
+    },
+    focusTask(id){
+      if (!ready) return;
+      const n = nodes.find(x=>x.kind==='task' && x.task.id===id);
+      if (!n) return;
+      expandPathTo(n);
+      cam.x = Math.cos(n.angle)*n.r; cam.y = Math.sin(n.angle)*n.r;
+      cam.zoom = Math.max(cam.zoom,1.7);
+    }
+  };
+})();
+
+/* ==========================================================================
+   9. BOOT
+   ========================================================================== */
+
+function wireGlobalKeys(){
+  document.addEventListener('keydown', e=>{
+    if (e.key === 'Escape'){ closePanels(); return; }
+    // unlock chord — an MVP convenience, not a security control
+    if (e.ctrlKey && e.shiftKey && (e.key==='E'||e.key==='e')){
+      e.preventDefault(); setEditMode(!App.editMode); return;
+    }
+    if (e.key === '/' && document.activeElement !== $('#q') &&
+        !/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)){
+      e.preventDefault();
+      if (App.view==='list') $('#q').focus(); else $('#map-q').focus();
+    }
+  });
+  document.querySelectorAll('[data-close-panel]').forEach(b=>b.onclick = closePanels);
+  $('#btn-view-list').onclick = ()=>setView('list');
+  $('#btn-view-map').onclick  = ()=>setView('map');
+  $('#q').addEventListener('input', e=>{ App.filters.q = e.target.value; renderChips(); renderResults(); });
+}
+
+function versionCheck(){
+  const d = App.draft;
+  if (draftIsEmpty(d)){
+    d.basedOnVersion = App.published.version;
+    d.pendingPublishVersion = 0;
+    saveDraft();
+    return;
+  }
+  // our own publish landed — the file now carries the version we generated
+  if (d.pendingPublishVersion && App.published.version >= d.pendingPublishVersion){
+    App.draft = emptyDraft();
+    App.draft.basedOnVersion = App.published.version;
+    saveDraft(); compose();
+    toast('Your publish is live as v'+App.published.version+'. Drafts cleared.');
+    return;
+  }
+  // someone (probably you, on another device) published in between.
+  // Two choices only — no dismiss. Silent merging is exactly what corrupts things here.
+  if (App.published.version > d.basedOnVersion){
+    const m = modal('The published data has changed since your drafts were made.');
+    m.body.appendChild(el('p','',
+      'data.json is now v'+App.published.version+'. Your drafts were made against v'+d.basedOnVersion+
+      '. Nothing has been merged — choose one.'));
+    m.body.appendChild(el('p','',
+      'Keeping them re-applies your '+changeCount()+' change'+(changeCount()===1?'':'s')+
+      ' on top of the new file. Review the diff before you publish.'));
+    m.addBtn('Discard my drafts','btn btn-danger',()=>{
+      m.close();
+      App.draft = emptyDraft(); App.draft.basedOnVersion = App.published.version;
+      saveDraft(); compose(); refreshAll(); toast('Drafts discarded.');
+    });
+    m.addBtn('Keep my drafts','btn btn-primary',()=>{
+      m.close();
+      App.draft.basedOnVersion = App.published.version;
+      saveDraft(); refreshAll();
+    });
+  }
+}
+
+async function boot(){
+  wireGlobalKeys();
+
+  // storage probe
+  try{ localStorage.setItem('__probe','1'); localStorage.removeItem('__probe'); }
+  catch(e){ App.readOnly = true; }
+
+  try{
+    App.published = await loadData();
+  }catch(e){
+    App.loadError = e.message;
+    App.published = null;
+    App.idx = { live:[], deptNames:[], byDept:new Map(), byPerson:new Map(), missingSop:0 };
+    renderStatus(); renderResults();
+    $('#f-mode').textContent = 'data not loaded';
+    return;
+  }
+
+  App.draft = App.readOnly ? emptyDraft() : loadDraft();
+  compose();
+
+  const params = new URLSearchParams(location.search);
+  if (params.get('edit')==='1' && !App.readOnly) App.editMode = true;
+
+  versionCheck();
+
+  if (hasWebGL()) $('#btn-view-map').classList.remove('hidden');
+
+  refreshAll();
+  setView('list');
+
+  if (App.readOnly) toast('Browser storage is unavailable — the app is read only.');
+}
+
+boot();
+</script>
+</body>
+</html>

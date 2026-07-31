@@ -1,0 +1,6 @@
+# Keep text blobs LF. The publish flow writes data.json from the browser with LF
+# endings; without this, every publish would show as a whole-file diff and the
+# commit history stops being a usable audit trail.
+* text=auto eol=lf
+
+*.woff2 binary
