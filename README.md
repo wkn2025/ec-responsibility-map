@@ -182,6 +182,40 @@ robots.txt            Disallow: / — hygiene, not access control
 README.md             this file
 ```
 
+### Brand colours
+
+The three brand values are taken from the Euro-Center logo SVG on euro-center.com, not
+eyeballed. The site's own stylesheet agrees with them (`--bs-primary`, `--bs-green`, and the
+navy used across the main navigation):
+
+| Token | Value | Role here |
+|---|---|---|
+| `--ec-navy` | `#283583` | Structural — department hubs, links, pressed states |
+| `--ec-blue` | `#0084CC` | Documented — a task with an owner *and* an SOP |
+| `--ec-lime` | `#CFCE22` | **Missing SOP.** The only alarm colour in the app |
+
+Everything else (`--void`, `--void-lift`, `--mist`, `--paper`, `--grey-node`) is a support tone
+derived on the navy's hue, 231°, so the dark field reads as the same family rather than as a
+generic dark theme.
+
+Two things worth knowing before you change any of this:
+
+- **All colour lives in the `:root` block of `index.html`.** The WebGL map reads those custom
+  properties at boot rather than keeping its own copies, so re-colouring the whole app — list,
+  panels and map nodes alike — is an edit to that one block. There are no colour literals
+  anywhere else in the file.
+- **Filled blue buttons use `--ec-blue-deep` (`#006AA3`), not the brand blue.** White on
+  `#0084CC` is 4.06:1, below the 4.5:1 WCAG AA floor for normal text. `#006AA3` is
+  Euro-Center's own darker blue (their `--bs-link-hover-color`) and gives 5.85:1. The brand
+  blue is untouched everywhere it is a mark, a border or a text link. Every text/background
+  pair in the app now passes AA; the weakest is the blue mark on the dark field at 4.84:1.
+
+One deliberate divergence: on euro-center.com the lime is the **call-to-action** colour
+(`.green_button`). Here it means **undocumented**. That is the point of the whole map — lime is
+the loudest thing on a navy field, so documentation debt is impossible to miss. If that clash
+ever matters for a leadership demo, change the meaning in one place (`nodeColour()`), not the
+brand value.
+
 ### A note on the vendored Three.js
 
 `vendor/three.min.js` is **r160**, the classic UMD build that defines a global `THREE`. It works, and
